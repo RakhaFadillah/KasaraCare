@@ -1,0 +1,133 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { StatCard } from "@/components/stat-card";
+import { Users, Stethoscope, Building2, ListOrdered, ClipboardPlus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  LineChart, Line, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { todayISO } from "@/lib/format";
+
+export const Route = createFileRoute("/_authenticated/admin/")({
+  head: () => ({ meta: [{ title: "Admin Overview — MediCare" }] }),
+  component: AdminOverview,
+});
+
+const COLORS = ["oklch(0.58 0.16 235)","oklch(0.68 0.15 175)","oklch(0.72 0.16 300)","oklch(0.78 0.16 75)","oklch(0.62 0.18 25)","oklch(0.68 0.15 155)","oklch(0.55 0.17 260)","oklch(0.7 0.14 190)"];
+
+function AdminOverview() {
+  const statsQ = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: async () => {
+      const [{ count: patients }, { count: doctors }, { count: clinics },
+             { count: todayReg }, { count: activeQueue }] = await Promise.all([
+        supabase.from("patients").select("*", { count: "exact", head: true }),
+        supabase.from("doctors").select("*", { count: "exact", head: true }),
+        supabase.from("clinics").select("*", { count: "exact", head: true }),
+        supabase.from("registrations").select("*", { count: "exact", head: true }).eq("visit_date", todayISO()),
+        supabase.from("queues").select("*", { count: "exact", head: true }).eq("visit_date", todayISO()).in("status", ["Waiting","Called","Serving"]),
+      ]);
+      return { patients: patients ?? 0, doctors: doctors ?? 0, clinics: clinics ?? 0, todayReg: todayReg ?? 0, activeQueue: activeQueue ?? 0 };
+    },
+  });
+
+  const monthlyQ = useQuery({
+    queryKey: ["admin-monthly"],
+    queryFn: async () => {
+      const { data } = await supabase.from("registrations").select("created_at").gte("created_at", new Date(Date.now() - 180 * 864e5).toISOString());
+      const byMonth: Record<string, number> = {};
+      (data ?? []).forEach((r) => {
+        const key = new Date(r.created_at!).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+        byMonth[key] = (byMonth[key] ?? 0) + 1;
+      });
+      return Object.entries(byMonth).map(([month, count]) => ({ month, count }));
+    },
+  });
+
+  const clinicDistQ = useQuery({
+    queryKey: ["admin-clinic-dist"],
+    queryFn: async () => {
+      const { data } = await supabase.from("registrations").select("clinic_id, clinics(name)");
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { const n = r.clinics?.name ?? "—"; map[n] = (map[n] ?? 0) + 1; });
+      return Object.entries(map).map(([name, value]) => ({ name, value }));
+    },
+  });
+
+  const doctorActivityQ = useQuery({
+    queryKey: ["admin-doctor-activity"],
+    queryFn: async () => {
+      const { data } = await supabase.from("registrations").select("doctor_id, doctors(full_name)");
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { const n = r.doctors?.full_name ?? "—"; map[n] = (map[n] ?? 0) + 1; });
+      return Object.entries(map).map(([name, count]) => ({ name: name.replace(/^Dr\.\s?/, ""), count })).sort((a,b)=>b.count-a.count).slice(0,8);
+    },
+  });
+
+  return (
+    <DashboardShell title="Admin Overview" description="Real-time analytics for hospital operations.">
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+        <StatCard label="Total Patients" value={statsQ.data?.patients ?? "—"} icon={<Users className="h-4 w-4" />} />
+        <StatCard label="Today Registrations" value={statsQ.data?.todayReg ?? "—"} icon={<ClipboardPlus className="h-4 w-4" />} />
+        <StatCard label="Doctors" value={statsQ.data?.doctors ?? "—"} icon={<Stethoscope className="h-4 w-4" />} />
+        <StatCard label="Clinics" value={statsQ.data?.clinics ?? "—"} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard label="Active Queue" value={statsQ.data?.activeQueue ?? "—"} icon={<ListOrdered className="h-4 w-4" />} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ChartCard title="Registration trend (6 months)">
+          {monthlyQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={monthlyQ.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.015 235)" />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip contentStyle={{ borderRadius: 12 }} />
+                <Line type="monotone" dataKey="count" stroke="oklch(0.58 0.16 235)" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Registrations by clinic">
+          {clinicDistQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie data={clinicDistQ.data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
+                  {clinicDistQ.data?.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip /><Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Doctor activity" className="lg:col-span-2">
+          {doctorActivityQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={doctorActivityQ.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.015 235)" />
+                <XAxis dataKey="name" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip contentStyle={{ borderRadius: 12 }} />
+                <Bar dataKey="count" fill="oklch(0.58 0.16 235)" radius={[6,6,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
+      </div>
+    </DashboardShell>
+  );
+}
+
+function ChartCard({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`glass-card rounded-3xl p-6 ${className}`}>
+      <h3 className="mb-4 font-display font-semibold">{title}</h3>
+      {children}
+    </div>
+  );
+}
