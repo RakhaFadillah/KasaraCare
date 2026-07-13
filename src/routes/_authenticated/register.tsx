@@ -35,10 +35,14 @@ function RegisterPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [ticket, setTicket] = useState<any>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    clinic_id: string; doctor_id: string; schedule_id: string; visit_date: string;
+    complaint: string; insurance: "BPJS" | "Private" | "Self-Pay" | "Corporate";
+    bpjs_number: string; referral_number: string; full_name: string;
+  }>({
     clinic_id: "", doctor_id: "", schedule_id: "",
     visit_date: todayISO(), complaint: "",
-    insurance: "Self-Pay" as const, bpjs_number: "", referral_number: "",
+    insurance: "Self-Pay", bpjs_number: "", referral_number: "",
     full_name: "",
   });
 
