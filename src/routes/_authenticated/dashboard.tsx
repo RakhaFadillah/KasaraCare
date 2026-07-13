@@ -61,8 +61,19 @@ function PatientDashboard() {
   const next = upcomingQ.data?.[0];
   const profile = patientQ.data;
 
+  const isAdmin = useIsAdmin();
+  const qc = useQueryClient();
+  const bootstrap = useServerFn(bootstrapFirstAdmin);
+  const handleBootstrap = async () => {
+    try {
+      const res = await bootstrap();
+      if (res.ok) { toast.success("You are now admin"); qc.invalidateQueries(); }
+      else toast.info("An admin already exists");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+  };
+
   return (
-    <DashboardShell title={`Welcome${profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋`} description="Here's your health snapshot for today.">
+    <DashboardShell title={`Welcome${profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋`} description="Here's your health snapshot for today." actions={!isAdmin ? <Button variant="outline" size="sm" onClick={handleBootstrap}>Become admin (first user)</Button> : undefined}>
       {/* Profile card */}
       <div className="glass-card mb-6 flex flex-wrap items-center gap-6 rounded-3xl p-6">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary text-primary-foreground shadow-soft">
