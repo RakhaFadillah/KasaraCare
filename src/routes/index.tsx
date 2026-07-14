@@ -19,12 +19,15 @@ function Landing() {
   }, [session, navigate]);
 
   return (
-    // Background biru super muda khas medis
-    <div className="min-h-screen bg-[#f4f9fd]">
+    // Background biru super muda khas medis dipaksa dengan inline style
+    <div className="min-h-screen" style={{ backgroundColor: '#f4f9fd' }}>
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           {/* Ikon Header Bulat Biru Solid */}
-          <div className="grid h-10 w-10 place-items-center rounded-full bg-[#00a2ed] text-white shadow-md">
+          <div 
+            className="grid h-10 w-10 place-items-center rounded-full shadow-md"
+            style={{ backgroundColor: '#00a2ed', color: 'white' }}
+          >
             <HeartPulse className="h-5 w-5" />
           </div>
           <div>
@@ -38,7 +41,7 @@ function Landing() {
           </Link>
           <Link to="/auth" search={{ mode: "signup" }}>
             {/* Tombol Biru Solid */}
-            <Button className="bg-[#00a2ed] hover:bg-[#0089c9] text-white">Daftar</Button>
+            <Button style={{ backgroundColor: '#00a2ed', color: 'white' }}>Daftar</Button>
           </Link>
         </div>
       </header>
@@ -46,30 +49,48 @@ function Landing() {
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:pt-20">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            {/* Badge BPJS dengan outline dan text biru */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#00a2ed]/20 bg-[#00a2ed]/10 px-3 py-1 text-xs font-medium text-[#00a2ed]">
+            {/* Badge BPJS */}
+            <div 
+              className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
+              style={{ 
+                backgroundColor: 'rgba(0, 162, 237, 0.1)', 
+                borderColor: 'rgba(0, 162, 237, 0.2)', 
+                color: '#00a2ed' 
+              }}
+            >
               <ShieldCheck className="h-3.5 w-3.5" /> Terintegrasi BPJS & Asuransi
             </div>
+            
             <h1 className="text-4xl font-bold leading-tight md:text-6xl">
               Pendaftaran & Antrean{" "}
-              {/* Teks Biru Solid, BUKAN Gradient */}
-              <span className="text-[#00a2ed]">
+              {/* Teks Biru Solid */}
+              <span style={{ color: '#00a2ed' }}>
                 Rumah Sakit
               </span>{" "}
               dalam Genggaman
             </h1>
+            
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
               Daftar poliklinik, pantau nomor antrean secara realtime, dan akses riwayat medis Anda kapan saja.
             </p>
+            
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }}>
                 {/* Tombol Utama Biru Solid */}
-                <Button size="lg" className="bg-[#00a2ed] hover:bg-[#0089c9] text-white shadow-lg shadow-[#00a2ed]/30">
+                <Button 
+                  size="lg" 
+                  className="shadow-lg"
+                  style={{ 
+                    backgroundColor: '#00a2ed', 
+                    color: 'white',
+                    boxShadow: '0 10px 15px -3px rgba(0, 162, 237, 0.3)' 
+                  }}
+                >
                   Mulai Sekarang <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="lg" variant="outline" className="bg-white hover:bg-slate-50">
+                <Button size="lg" variant="outline" className="bg-white">
                   Masuk Akun
                 </Button>
               </Link>
@@ -87,8 +108,11 @@ function Landing() {
                 key={f.title}
                 className="bg-white rounded-2xl p-5 transition hover:-translate-y-0.5 shadow-sm hover:shadow-md border border-slate-100"
               >
-                {/* Ikon Card Biru Solid dengan Ikon Putih di dalamnya */}
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#00a2ed] text-white">
+                {/* Ikon Card Biru Solid */}
+                <div 
+                  className="grid h-10 w-10 place-items-center rounded-xl"
+                  style={{ backgroundColor: '#00a2ed', color: 'white' }}
+                >
                   <f.icon className="h-5 w-5" />
                 </div>
                 <div className="mt-3 font-semibold">{f.title}</div>
