@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { HeartPulse, Calendar, Clock, Users, ShieldCheck, ArrowRight } from "lucide-react";
-
-import { useAuth } from "../hooks/use-auth"; 
+import { useAuth } from "../hooks/use-auth";
 import { Button } from "../components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -20,11 +19,12 @@ function Landing() {
   }, [session, navigate]);
 
   return (
-    // PERBAIKAN: Mengganti 'gradient-hero' dengan 'bg-slate-50' agar background solid, bersih, dan agak kebiruan terang seperti desain.
-    <div className="min-h-screen bg-slate-50">
+    // Background biru super muda khas medis
+    <div className="min-h-screen bg-[#f4f9fd]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <div className="grid h-10 w-10 place-items-center rounded-xl gradient-medical text-primary-foreground shadow-glow">
+          {/* Ikon Header Bulat Biru Solid */}
+          <div className="grid h-10 w-10 place-items-center rounded-full bg-[#00a2ed] text-white shadow-md">
             <HeartPulse className="h-5 w-5" />
           </div>
           <div>
@@ -37,7 +37,8 @@ function Landing() {
             <Button variant="ghost">Masuk</Button>
           </Link>
           <Link to="/auth" search={{ mode: "signup" }}>
-            <Button className="gradient-medical text-primary-foreground">Daftar</Button>
+            {/* Tombol Biru Solid */}
+            <Button className="bg-[#00a2ed] hover:bg-[#0089c9] text-white">Daftar</Button>
           </Link>
         </div>
       </header>
@@ -45,12 +46,14 @@ function Landing() {
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:pt-20">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">
+            {/* Badge BPJS dengan outline dan text biru */}
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#00a2ed]/20 bg-[#00a2ed]/10 px-3 py-1 text-xs font-medium text-[#00a2ed]">
               <ShieldCheck className="h-3.5 w-3.5" /> Terintegrasi BPJS & Asuransi
             </div>
             <h1 className="text-4xl font-bold leading-tight md:text-6xl">
               Pendaftaran & Antrean{" "}
-              <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+              {/* Teks Biru Solid, BUKAN Gradient */}
+              <span className="text-[#00a2ed]">
                 Rumah Sakit
               </span>{" "}
               dalam Genggaman
@@ -60,12 +63,13 @@ function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }}>
-                <Button size="lg" className="gradient-medical text-primary-foreground shadow-glow">
+                {/* Tombol Utama Biru Solid */}
+                <Button size="lg" className="bg-[#00a2ed] hover:bg-[#0089c9] text-white shadow-lg shadow-[#00a2ed]/30">
                   Mulai Sekarang <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="lg" variant="outline" className="bg-white">
+                <Button size="lg" variant="outline" className="bg-white hover:bg-slate-50">
                   Masuk Akun
                 </Button>
               </Link>
@@ -81,10 +85,10 @@ function Landing() {
             ].map((f) => (
               <div
                 key={f.title}
-                // PERBAIKAN: Menambahkan 'bg-white' agar kotak (card) terlihat menonjol dan rapi di atas background yang baru
-                className="bg-white rounded-2xl p-5 transition hover:-translate-y-0.5 shadow-sm hover:shadow-glow border border-slate-100"
+                className="bg-white rounded-2xl p-5 transition hover:-translate-y-0.5 shadow-sm hover:shadow-md border border-slate-100"
               >
-                <div className="grid h-10 w-10 place-items-center rounded-lg gradient-medical text-primary-foreground">
+                {/* Ikon Card Biru Solid dengan Ikon Putih di dalamnya */}
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#00a2ed] text-white">
                   <f.icon className="h-5 w-5" />
                 </div>
                 <div className="mt-3 font-semibold">{f.title}</div>
