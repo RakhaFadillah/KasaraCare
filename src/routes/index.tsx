@@ -19,8 +19,13 @@ function Landing() {
   }, [session, navigate]);
 
   return (
-    // Background biru super muda khas medis dipaksa dengan inline style
-    <div className="min-h-screen" style={{ backgroundColor: '#f4f9fd' }}>
+    // PERBAIKAN: Background menggunakan efek linear-gradient dari biru muda ke putih transparan
+    <div 
+      className="min-h-screen" 
+      style={{ 
+        background: 'linear-gradient(135deg, #dbeafe 0%, #f0f9ff 40%, #ffffff 100%)' 
+      }}
+    >
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           {/* Ikon Header Bulat Biru Solid */}
@@ -40,7 +45,6 @@ function Landing() {
             <Button variant="ghost">Masuk</Button>
           </Link>
           <Link to="/auth" search={{ mode: "signup" }}>
-            {/* Tombol Biru Solid */}
             <Button style={{ backgroundColor: '#00a2ed', color: 'white' }}>Daftar</Button>
           </Link>
         </div>
@@ -63,7 +67,6 @@ function Landing() {
             
             <h1 className="text-4xl font-bold leading-tight md:text-6xl">
               Pendaftaran & Antrean{" "}
-              {/* Teks Biru Solid */}
               <span style={{ color: '#00a2ed' }}>
                 Rumah Sakit
               </span>{" "}
@@ -76,10 +79,9 @@ function Landing() {
             
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }}>
-                {/* Tombol Utama Biru Solid */}
                 <Button 
                   size="lg" 
-                  className="shadow-lg"
+                  className="shadow-lg transition-transform hover:scale-105"
                   style={{ 
                     backgroundColor: '#00a2ed', 
                     color: 'white',
@@ -90,7 +92,7 @@ function Landing() {
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="lg" variant="outline" className="bg-white">
+                <Button size="lg" variant="outline" className="bg-white/80 backdrop-blur-sm">
                   Masuk Akun
                 </Button>
               </Link>
@@ -106,11 +108,11 @@ function Landing() {
             ].map((f) => (
               <div
                 key={f.title}
-                className="bg-white rounded-2xl p-5 transition hover:-translate-y-0.5 shadow-sm hover:shadow-md border border-slate-100"
+                className="rounded-2xl p-5 transition-all hover:-translate-y-1 shadow-sm hover:shadow-lg border border-white/50"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)' }}
               >
-                {/* Ikon Card Biru Solid */}
                 <div 
-                  className="grid h-10 w-10 place-items-center rounded-xl"
+                  className="grid h-10 w-10 place-items-center rounded-xl shadow-sm"
                   style={{ backgroundColor: '#00a2ed', color: 'white' }}
                 >
                   <f.icon className="h-5 w-5" />
@@ -123,7 +125,7 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-border/50 py-6 text-center text-xs text-muted-foreground">
+      <footer className="border-t border-black/5 py-6 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} RS Sehat Sentosa. Seluruh hak cipta dilindungi.
       </footer>
     </div>
