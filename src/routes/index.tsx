@@ -1,79 +1,104 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { HeartPulse, CalendarClock, ListOrdered, FileHeart, Shield, ArrowRight, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { HeartPulse, Calendar, Clock, Users, ShieldCheck, ArrowRight } from "lucide-react";
+
+// 1. PERBAIKAN: Gunakan use-auth.ts yang memang ADA di folder Anda
+import { useAuth } from "../hooks/use-auth"; 
+import { Button } from "../components/ui/button";
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/dashboard" });
-  },
   component: Landing,
 });
 
 function Landing() {
+  // 2. PERBAIKAN: Gunakan useAuth bawaan template
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Jika sudah login, langsung lempar ke dashboard
+    if (session) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [session, navigate]);
+
   return (
-    <div className="min-h-screen">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+    <div className="min-h-screen gradient-hero">
+      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary text-primary-foreground shadow-soft">
+          <div className="grid h-10 w-10 place-items-center rounded-xl gradient-medical text-primary-foreground shadow-glow">
             <HeartPulse className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-display text-lg font-bold leading-none">MediCare</p>
-            <p className="text-[11px] text-muted-foreground">Hospital System</p>
+            {/* 3. PERBAIKAN: Tulis langsung nama RS di sini karena file hospital.ts tidak ada */}
+            <div className="text-sm font-bold">RS Sehat Sentosa</div>
+            <div className="text-[11px] text-muted-foreground">Pelayanan Kesehatan Terpadu</div>
           </div>
         </div>
-        <Link to="/auth" className="inline-flex items-center gap-2 rounded-full gradient-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-soft transition hover:opacity-90">
-          Sign in <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/auth">
+            <Button variant="ghost">Masuk</Button>
+          </Link>
+          <Link to="/auth" search={{ mode: "signup" }}>
+            <Button className="gradient-medical text-primary-foreground">Daftar</Button>
+          </Link>
+        </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-10 md:pt-20">
-        <div className="grid gap-10 md:grid-cols-2 md:items-center">
+      <section className="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:pt-20">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              <Sparkles className="h-3 w-3" /> Digital Patient Portal
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <ShieldCheck className="h-3.5 w-3.5" /> Terintegrasi BPJS & Asuransi
             </div>
-            <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-              Care that feels <span className="bg-clip-text text-transparent gradient-hero">effortless</span>.
+            <h1 className="text-4xl font-bold leading-tight md:text-6xl">
+              Pendaftaran & Antrean{" "}
+              <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                Rumah Sakit
+              </span>{" "}
+              dalam Genggaman
             </h1>
-            <p className="mt-4 max-w-lg text-base text-muted-foreground md:text-lg">
-              Register visits, track your queue in realtime, review medical history, and browse our specialists — all in one calm, modern portal.
+            <p className="mt-5 max-w-lg text-lg text-muted-foreground">
+              Daftar poliklinik, pantau nomor antrean secara realtime, dan akses riwayat medis Anda kapan saja.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl gradient-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:-translate-y-0.5">
-                Get started <ArrowRight className="h-4 w-4" />
+              <Link to="/auth" search={{ mode: "signup" }}>
+                <Button size="lg" className="gradient-medical text-primary-foreground shadow-glow">
+                  Mulai Sekarang <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
               </Link>
-              <Link to="/doctors" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold shadow-soft transition hover:bg-muted">
-                Browse doctors
+              <Link to="/auth">
+                <Button size="lg" variant="outline">
+                  Masuk Akun
+                </Button>
               </Link>
             </div>
           </div>
 
-          <div className="relative">
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { icon: CalendarClock, label: "Online Registration", desc: "Book in seconds" },
-                { icon: ListOrdered, label: "Live Queue", desc: "No more waiting rooms" },
-                { icon: FileHeart, label: "Medical Records", desc: "Always at your fingertips" },
-                { icon: Shield, label: "Private & Secure", desc: "Encrypted end-to-end" },
-              ].map((f) => (
-                <div key={f.label} className="glass-card rounded-2xl p-5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <f.icon className="h-5 w-5" />
-                  </div>
-                  <p className="mt-3 font-display font-semibold">{f.label}</p>
-                  <p className="text-xs text-muted-foreground">{f.desc}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { icon: Calendar, title: "Pendaftaran Online", desc: "Pilih poli, dokter, dan jadwal dalam hitungan detik." },
+              { icon: Clock, title: "Antrean Realtime", desc: "Estimasi waktu tunggu diperbarui otomatis." },
+              { icon: Users, title: "Direktori Dokter", desc: "Cari spesialis dan lihat jadwal praktiknya." },
+              { icon: HeartPulse, title: "Riwayat Medis", desc: "Diagnosis, resep, dan hasil lab dalam satu tempat." },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="glass-card rounded-2xl p-5 transition hover:-translate-y-0.5 hover:shadow-glow"
+              >
+                <div className="grid h-10 w-10 place-items-center rounded-lg gradient-medical text-primary-foreground">
+                  <f.icon className="h-5 w-5" />
                 </div>
-              ))}
-            </div>
+                <div className="mt-3 font-semibold">{f.title}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{f.desc}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} MediCare Hospital · A modern Hospital Information System
+      <footer className="border-t border-border/50 py-6 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} RS Sehat Sentosa. Seluruh hak cipta dilindungi.
       </footer>
     </div>
   );
