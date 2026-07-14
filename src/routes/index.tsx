@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { HeartPulse, Calendar, Clock, Users, ShieldCheck, ArrowRight } from "lucide-react";
 
-// 1. PERBAIKAN: Gunakan use-auth.ts yang memang ADA di folder Anda
 import { useAuth } from "../hooks/use-auth"; 
 import { Button } from "../components/ui/button";
 
@@ -11,26 +10,24 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  // 2. PERBAIKAN: Gunakan useAuth bawaan template
   const { session } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Jika sudah login, langsung lempar ke dashboard
     if (session) {
       navigate({ to: "/dashboard" });
     }
   }, [session, navigate]);
 
   return (
-    <div className="min-h-screen gradient-hero">
+    // PERBAIKAN: Mengganti 'gradient-hero' dengan 'bg-slate-50' agar background solid, bersih, dan agak kebiruan terang seperti desain.
+    <div className="min-h-screen bg-slate-50">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           <div className="grid h-10 w-10 place-items-center rounded-xl gradient-medical text-primary-foreground shadow-glow">
             <HeartPulse className="h-5 w-5" />
           </div>
           <div>
-            {/* 3. PERBAIKAN: Tulis langsung nama RS di sini karena file hospital.ts tidak ada */}
             <div className="text-sm font-bold">RS Sehat Sentosa</div>
             <div className="text-[11px] text-muted-foreground">Pelayanan Kesehatan Terpadu</div>
           </div>
@@ -48,7 +45,7 @@ function Landing() {
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:pt-20">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">
               <ShieldCheck className="h-3.5 w-3.5" /> Terintegrasi BPJS & Asuransi
             </div>
             <h1 className="text-4xl font-bold leading-tight md:text-6xl">
@@ -68,7 +65,7 @@ function Landing() {
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" className="bg-white">
                   Masuk Akun
                 </Button>
               </Link>
@@ -84,7 +81,8 @@ function Landing() {
             ].map((f) => (
               <div
                 key={f.title}
-                className="glass-card rounded-2xl p-5 transition hover:-translate-y-0.5 hover:shadow-glow"
+                // PERBAIKAN: Menambahkan 'bg-white' agar kotak (card) terlihat menonjol dan rapi di atas background yang baru
+                className="bg-white rounded-2xl p-5 transition hover:-translate-y-0.5 shadow-sm hover:shadow-glow border border-slate-100"
               >
                 <div className="grid h-10 w-10 place-items-center rounded-lg gradient-medical text-primary-foreground">
                   <f.icon className="h-5 w-5" />
