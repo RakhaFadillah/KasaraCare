@@ -31,7 +31,7 @@ import { toast } from "sonner";
 
 const menuItems = [
   {
-    title: "Dasbor",
+    title: "Dashboard",
     url: "/admin",
     icon: LayoutDashboard,
   },
@@ -110,7 +110,7 @@ export default function AdminSidebar() {
               </h2>
 
               <p className="text-xs text-muted-foreground">
-                Dasbor Admin
+                Dashboard Admin
               </p>
             </div>
           )}
