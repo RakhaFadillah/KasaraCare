@@ -22,7 +22,8 @@ function AdminOverview() {
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [p, doc, pol, nurse, room, preOp, inpat, bpjs, nonBpjs, services] = await Promise.all([
+      // PERBAIKAN: Memastikan jumlah variabel penampung sesuai dengan jumlah query
+      const [p, doc, pol, nurse, room, preOp, inpat, bpjs, nonBpjs, serv] = await Promise.all([
         supabase.from("patients").select("*", { count: "exact", head: true }),
         supabase.from("doctors").select("*", { count: "exact", head: true }),
         supabase.from("clinics").select("*", { count: "exact", head: true }),
@@ -36,17 +37,22 @@ function AdminOverview() {
       ]);
 
       return {
-        patients: p.count ?? 0, doctors: doc.count ?? 0, poli: pol.count ?? 0,
-        nurses: nurse.count ?? 0, rooms: room.count ?? 0, preOp: preOp.count ?? 0,
-        inpatient: inpat.count ?? 0, bpjs: bpjs.count ?? 0, nonBpjs: nonBpjs.count ?? 0,
-        services: services.count ?? 0
+        patients: p.count ?? 0, 
+        doctors: doc.count ?? 0, 
+        poli: pol.count ?? 0,
+        nurses: nurse.count ?? 0, 
+        rooms: room.count ?? 0, 
+        preOp: preOp.count ?? 0,
+        inpatient: inpat.count ?? 0, 
+        bpjs: bpjs.count ?? 0, 
+        nonBpjs: nonBpjs.count ?? 0,
+        services: serv.count ?? 0 // Menambahkan data services
       };
     },
   });
 
   return (
     <AdminDashboardShell title="Dashboard" description="Dashboard Manajemen Rumah Sakit">
-      {/* 10 Kotak Statistik Biru Solid */}
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatCard className="bg-[#00a3e0] text-white" label="Total Pasien" value={statsQ.data?.patients ?? "0"} icon={<Users className="h-4 w-4" />} />
         <StatCard className="bg-[#00a3e0] text-white" label="Pre-Operasi" value={statsQ.data?.preOp ?? "0"} icon={<ClipboardPlus className="h-4 w-4" />} />
@@ -61,7 +67,6 @@ function AdminOverview() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Chart-chart Anda... */}
         <ChartCard title="Tren Pendaftaran"><ResponsiveContainer width="100%" height={200}><LineChart data={[]}><Line type="monotone" dataKey="count" stroke="#00a3e0" /></LineChart></ResponsiveContainer></ChartCard>
         <ChartCard title="Distribusi Poli"><ResponsiveContainer width="100%" height={200}><PieChart><Pie data={[]} dataKey="value" fill="#8884d8" /></PieChart></ResponsiveContainer></ChartCard>
         <ChartCard title="Aktivitas Dokter"><ResponsiveContainer width="100%" height={200}><BarChart data={[]}><Bar dataKey="count" fill="#82ca9d" /></BarChart></ResponsiveContainer></ChartCard>
