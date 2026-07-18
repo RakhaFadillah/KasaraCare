@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { DashboardShell } from "@/components/dashboard-shell";
+import { DashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { supabase } from "@/integrations/supabase/client";
 import { dayName } from "@/lib/format";

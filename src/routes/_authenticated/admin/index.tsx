@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell } from "@/components/dashboard-shell";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { Users, Stethoscope, Building2, ListOrdered, ClipboardPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +10,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { todayISO } from "@/lib/format";
+import type { ReactNode } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Admin Overview — MediCare" }] }),
@@ -22,22 +23,53 @@ function AdminOverview() {
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [{ count: patients }, { count: doctors }, { count: clinics },
-             { count: todayReg }, { count: activeQueue }] = await Promise.all([
+      const [
+        patientRes,
+        doctorRes,
+        clinicRes,
+        registrationRes,
+        queueRes,
+      ] = await Promise.all([
         supabase.from("patients").select("*", { count: "exact", head: true }),
         supabase.from("doctors").select("*", { count: "exact", head: true }),
         supabase.from("clinics").select("*", { count: "exact", head: true }),
-        supabase.from("registrations").select("*", { count: "exact", head: true }).eq("visit_date", todayISO()),
-        supabase.from("queues").select("*", { count: "exact", head: true }).eq("visit_date", todayISO()).in("status", ["Waiting","Called","Serving"]),
+        supabase
+          .from("registrations")
+          .select("*", { count: "exact", head: true })
+          .eq("visit_date", todayISO()),
+        supabase
+          .from("queues")
+          .select("*", { count: "exact", head: true })
+          .eq("visit_date", todayISO())
+          .in("status", ["Waiting", "Called", "Serving"]),
       ]);
-      return { patients: patients ?? 0, doctors: doctors ?? 0, clinics: clinics ?? 0, todayReg: todayReg ?? 0, activeQueue: activeQueue ?? 0 };
+
+      if (
+        patientRes.error ||
+        doctorRes.error ||
+        clinicRes.error ||
+        registrationRes.error ||
+        queueRes.error
+      ) {
+        throw new Error("Failed to load dashboard statistics");
+      }
+
+      return {
+        patients: patientRes.count ?? 0,
+        doctors: doctorRes.count ?? 0,
+        clinics: clinicRes.count ?? 0,
+        todayReg: registrationRes.count ?? 0,
+        activeQueue: queueRes.count ?? 0,
+      };
     },
   });
 
   const monthlyQ = useQuery({
     queryKey: ["admin-monthly"],
     queryFn: async () => {
-      const { data } = await supabase.from("registrations").select("created_at").gte("created_at", new Date(Date.now() - 180 * 864e5).toISOString());
+      const { data, error } = await supabase.from("registrations").select("created_at").gte("created_at", new Date(Date.now() - 180 * 864e5).toISOString());
+      if (error) throw new Error("Failed to load monthly data");
+      
       const byMonth: Record<string, number> = {};
       (data ?? []).forEach((r) => {
         const key = new Date(r.created_at!).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
@@ -50,7 +82,9 @@ function AdminOverview() {
   const clinicDistQ = useQuery({
     queryKey: ["admin-clinic-dist"],
     queryFn: async () => {
-      const { data } = await supabase.from("registrations").select("clinic_id, clinics(name)");
+      const { data, error } = await supabase.from("registrations").select("clinic_id, clinics(name)");
+      if (error) throw new Error("Failed to load clinic distribution data");
+
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: any) => { const n = r.clinics?.name ?? "—"; map[n] = (map[n] ?? 0) + 1; });
       return Object.entries(map).map(([name, value]) => ({ name, value }));
@@ -60,7 +94,9 @@ function AdminOverview() {
   const doctorActivityQ = useQuery({
     queryKey: ["admin-doctor-activity"],
     queryFn: async () => {
-      const { data } = await supabase.from("registrations").select("doctor_id, doctors(full_name)");
+      const { data, error } = await supabase.from("registrations").select("doctor_id, doctors(full_name)");
+      if (error) throw new Error("Failed to load doctor activity data");
+
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: any) => { const n = r.doctors?.full_name ?? "—"; map[n] = (map[n] ?? 0) + 1; });
       return Object.entries(map).map(([name, count]) => ({ name: name.replace(/^Dr\.\s?/, ""), count })).sort((a,b)=>b.count-a.count).slice(0,8);
@@ -68,7 +104,7 @@ function AdminOverview() {
   });
 
   return (
-    <DashboardShell title="Admin Overview" description="Real-time analytics for hospital operations.">
+    <AdminDashboardShell title="Dashboard" description="Hospital Management Dashboard">
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatCard label="Total Patients" value={statsQ.data?.patients ?? "—"} icon={<Users className="h-4 w-4" />} />
         <StatCard label="Today Registrations" value={statsQ.data?.todayReg ?? "—"} icon={<ClipboardPlus className="h-4 w-4" />} />
@@ -119,15 +155,15 @@ function AdminOverview() {
           )}
         </ChartCard>
       </div>
-    </DashboardShell>
+    </AdminDashboardShell>
   );
 }
 
-function ChartCard({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
+function ChartCard({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) {
   return (
     <div className={`glass-card rounded-3xl p-6 ${className}`}>
       <h3 className="mb-4 font-display font-semibold">{title}</h3>
       {children}
     </div>
   );
-}
+}   
