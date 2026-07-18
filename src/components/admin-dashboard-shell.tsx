@@ -26,8 +26,8 @@ export function AdminDashboardShell({
 
         {/* Content */}
         <div className="flex flex-1 flex-col">
-          {/* Header */}
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm">
+          {/* Header - Diubah dari bg-white menjadi bg-blue-50 (biru muda) */}
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-blue-50 px-6 shadow-sm">
             <div className="flex items-center gap-3">
               <SidebarTrigger />
             </div>
@@ -37,7 +37,7 @@ export function AdminDashboardShell({
                 {user?.email ?? "Administrator"}
               </p>
               <p className="text-xs text-muted-foreground">
-                System Administrator
+                Administrator Sistem
               </p>
             </div>
           </header>
