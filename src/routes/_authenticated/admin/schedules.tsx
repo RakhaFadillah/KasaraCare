@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { DashboardShell } from "@/components/admin-dashboard-shell";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { supabase } from "@/integrations/supabase/client";
 import { dayName } from "@/lib/format";
@@ -12,12 +12,25 @@ export const Route = createFileRoute("/_authenticated/admin/schedules")({
 });
 
 function Schedules() {
-  const doctorsQ = useQuery({ queryKey: ["doctors-opts"], queryFn: async () => (await supabase.from("doctors").select("id, full_name").order("full_name")).data ?? [] });
+  const doctorsQ = useQuery({ 
+    queryKey: ["doctors-opts"], 
+    queryFn: async () => {
+      const { data, error } = await supabase.from("doctors").select("id, full_name").order("full_name");
+      if (error) throw new Error("Failed to load doctors data");
+      return data ?? [];
+    } 
+  });
+  
   const opts = doctorsQ.data?.map((d: any) => ({ value: d.id, label: d.full_name })) ?? [];
+  
   return (
-    <DashboardShell title="Doctor schedules" description="Manage practice hours.">
+    <AdminDashboardShell title="Schedules" description="Doctor Schedule">
       <CrudTable<any>
-        table="schedules" title="Schedule" select="*, doctors(full_name)" orderBy="day_of_week" ascending
+        table="schedules" 
+        title="Schedule" 
+        select="*, doctors(full_name)" 
+        orderBy="day_of_week" 
+        ascending
         searchKeys={[]}
         columns={[
           { key: "doctor", label: "Doctor", render: (r) => r.doctors?.full_name ?? "—" },
@@ -35,6 +48,6 @@ function Schedules() {
           { key: "is_active", label: "Active", type: "checkbox" },
         ]}
       />
-    </DashboardShell>
+    </AdminDashboardShell>
   );
 }

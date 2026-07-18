@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { DashboardShell } from "@/components/admin-dashboard-shell";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,24 @@ export const Route = createFileRoute("/_authenticated/admin/doctors")({
 });
 
 function DoctorsAdmin() {
-  const clinicsQ = useQuery({ queryKey: ["clinics-opts"], queryFn: async () => (await supabase.from("clinics").select("id, name").order("name")).data ?? [] });
+  const clinicsQ = useQuery({ 
+    queryKey: ["clinics-opts"], 
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clinics").select("id, name").order("name");
+      if (error) throw new Error("Failed to load clinics data");
+      return data ?? [];
+    } 
+  });
+  
   const options = clinicsQ.data?.map((c: any) => ({ value: c.id, label: c.name })) ?? [];
+  
   return (
-    <DashboardShell title="Doctors" description="Manage medical staff.">
+    <AdminDashboardShell title="Doctors" description="Manage medical staff.">
       <CrudTable<any>
-        table="doctors" title="Doctor" select="*, clinics(name)" searchKeys={["full_name","specialization"]}
+        table="doctors" 
+        title="Doctor" 
+        select="*, clinics(name)" 
+        searchKeys={["full_name", "specialization"]}
         columns={[
           { key: "full_name", label: "Name" },
           { key: "specialization", label: "Specialization" },
@@ -31,9 +43,9 @@ function DoctorsAdmin() {
           { key: "license_no", label: "License number" },
           { key: "bio", label: "Bio", type: "textarea" },
           { key: "photo_url", label: "Photo URL" },
-          { key: "status", label: "Status", type: "select", options: [{value:"Available",label:"Available"},{value:"OnLeave",label:"On Leave"},{value:"Inactive",label:"Inactive"}] },
+          { key: "status", label: "Status", type: "select", options: [{ value: "Available", label: "Available" }, { value: "OnLeave", label: "On Leave" }, { value: "Inactive", label: "Inactive" }] },
         ]}
       />
-    </DashboardShell>
+    </AdminDashboardShell>
   );
 }

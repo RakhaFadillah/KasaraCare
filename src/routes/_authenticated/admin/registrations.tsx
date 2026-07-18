@@ -1,15 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DashboardShell } from "@/components/admin-dashboard-shell";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { Badge } from "@/components/ui/badge";
 import { fmtDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/registrations")({
   head: () => ({ meta: [{ title: "Registrations — Admin" }] }),
-  component: () => (
-    <DashboardShell title="Registrations" description="All patient registrations.">
+  component: RegistrationsAdmin,
+});
+
+function RegistrationsAdmin() {
+  return (
+    <AdminDashboardShell title="Registrations" description="Patient Registration">
       <CrudTable<any>
-        table="registrations" title="Registration"
+        table="registrations" 
+        title="Registration"
         select="*, patients(full_name, medical_record_no), doctors(full_name), clinics(name)"
         searchKeys={[]}
         columns={[
@@ -26,6 +31,6 @@ export const Route = createFileRoute("/_authenticated/admin/registrations")({
           { key: "complaint", label: "Complaint", type: "textarea" },
         ]}
       />
-    </DashboardShell>
-  ),
-});
+    </AdminDashboardShell>
+  );
+}

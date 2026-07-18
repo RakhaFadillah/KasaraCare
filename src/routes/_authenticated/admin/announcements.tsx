@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DashboardShell } from "@/components/admin-dashboard-shell";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { Badge } from "@/components/ui/badge";
 import { fmtDateTime } from "@/lib/format";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/admin/announcements")({
 
 function AnnouncementsPage() {
   return (
-    <DashboardShell title="Announcements" description="Publish updates to patients.">
+    <AdminDashboardShell title="Announcements" description="Hospital Announcements">
       <CrudTable
         table="announcements"
         title="Announcement"
@@ -44,6 +44,6 @@ function AnnouncementsPage() {
           { key: "is_pinned", label: "Pin to top", type: "checkbox" },
         ]}
       />
-    </DashboardShell>
+    </AdminDashboardShell>
   );
 }

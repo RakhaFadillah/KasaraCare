@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell } from "@/components/admin-dashboard-shell";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,28 @@ function QueuesAdmin() {
   const [doctorId, setDoctorId] = useState<string>("");
   const [date, setDate] = useState<string>(todayISO());
 
-  const doctorsQ = useQuery({ queryKey: ["doctors-opts"], queryFn: async () => (await supabase.from("doctors").select("id, full_name").order("full_name")).data ?? [] });
+  const doctorsQ = useQuery({ 
+    queryKey: ["doctors-opts"], 
+    queryFn: async () => {
+      const { data, error } = await supabase.from("doctors").select("id, full_name").order("full_name");
+      if (error) throw new Error("Failed to load doctors");
+      return data ?? [];
+    } 
+  });
+
   const queueQ = useQuery({
-    queryKey: ["admin-queue", doctorId, date], enabled: !!doctorId && !!date,
-    queryFn: async () => (await supabase.from("queues").select("*, registrations(patients(full_name, medical_record_no))")
-      .eq("doctor_id", doctorId).eq("visit_date", date).order("queue_number")).data ?? [],
+    queryKey: ["admin-queue", doctorId, date], 
+    enabled: !!doctorId && !!date,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("queues")
+        .select("*, registrations(patients(full_name, medical_record_no))")
+        .eq("doctor_id", doctorId)
+        .eq("visit_date", date)
+        .order("queue_number");
+      
+      if (error) throw new Error("Failed to load queue data");
+      return data ?? [];
+    },
   });
 
   useEffect(() => {
@@ -47,26 +64,45 @@ function QueuesAdmin() {
   };
 
   return (
-    <DashboardShell title="Queue management" description="Realtime queue console for staff.">
+    <AdminDashboardShell title="Queues" description="Queue Management">
       <div className="glass-card mb-4 flex flex-wrap items-end gap-3 rounded-2xl p-4">
         <div>
           <label className="text-xs text-muted-foreground">Doctor</label>
           <Select value={doctorId} onValueChange={setDoctorId}>
             <SelectTrigger className="w-64"><SelectValue placeholder="Select doctor" /></SelectTrigger>
-            <SelectContent>{doctorsQ.data?.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {doctorsQ.data?.map((d: any) => (
+                <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Date</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="block h-9 rounded-md border border-input bg-background px-3 text-sm" />
         </div>
-        <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground"><Radio className="h-3 w-3 animate-pulse text-primary" /> Live sync</div>
+        <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+          <Radio className="h-3 w-3 animate-pulse text-primary" /> Live sync
+        </div>
       </div>
 
       <div className="glass-card rounded-3xl p-4">
-        {!doctorId ? <EmptyState title="Choose a doctor" /> : (queueQ.data?.length ?? 0) === 0 ? <EmptyState title="No queue for that day" /> : (
+        {!doctorId ? (
+          <EmptyState title="Choose a doctor" />
+        ) : (queueQ.data?.length ?? 0) === 0 ? (
+          <EmptyState title="No queue for that day" />
+        ) : (
           <Table>
-            <TableHeader><TableRow><TableHead>#</TableHead><TableHead>Patient</TableHead><TableHead>MRN</TableHead><TableHead>Called</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>Patient</TableHead>
+                <TableHead>MRN</TableHead>
+                <TableHead>Called</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {queueQ.data!.map((q: any) => (
                 <TableRow key={q.id}>
@@ -87,6 +123,6 @@ function QueuesAdmin() {
           </Table>
         )}
       </div>
-    </DashboardShell>
+    </AdminDashboardShell>
   );
 }
