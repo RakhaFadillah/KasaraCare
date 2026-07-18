@@ -22,7 +22,6 @@ function AdminOverview() {
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      // PERBAIKAN: Memastikan jumlah variabel penampung sesuai dengan jumlah query
       const [p, doc, pol, nurse, room, preOp, inpat, bpjs, nonBpjs, serv] = await Promise.all([
         supabase.from("patients").select("*", { count: "exact", head: true }),
         supabase.from("doctors").select("*", { count: "exact", head: true }),
@@ -46,7 +45,7 @@ function AdminOverview() {
         inpatient: inpat.count ?? 0, 
         bpjs: bpjs.count ?? 0, 
         nonBpjs: nonBpjs.count ?? 0,
-        services: serv.count ?? 0 // Menambahkan data services
+        services: serv.count ?? 0
       };
     },
   });

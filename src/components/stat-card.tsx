@@ -1,42 +1,84 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function StatCard({ label, value, icon, hint, className }: {
-  label: string; value: ReactNode; icon?: ReactNode; hint?: string; className?: string;
-}) {
-  // Mengecek apakah kartu menggunakan warna biru
-  const isBlue = className?.includes("bg-[#00a3e0]");
+interface StatCardProps {
+  label: string;
+  value: ReactNode;
+  icon?: ReactNode;
+  hint?: string;
+  className?: string;
+}
+
+export function StatCard({
+  label,
+  value,
+  icon,
+  hint,
+  className,
+}: StatCardProps) {
+  const isPrimary = className?.includes("bg-[#00a3e0]");
 
   return (
-    <div className={cn(
-      "glass-card rounded-2xl p-5 transition hover:-translate-y-0.5 hover:shadow-elegant",
-      isBlue ? "text-white" : "text-slate-900", // Jika biru, teks putih. Jika putih, teks hitam.
-      className
-    )}>
-      <div className="flex items-center justify-between">
-        <p className={cn("text-sm font-medium", isBlue ? "text-white/80" : "text-muted-foreground")}>
-          {label}
-        </p>
-        
+    <div
+      className={cn(
+        "rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1",
+        isPrimary
+          ? "bg-[#00a3e0] text-white shadow-xl shadow-cyan-500/25"
+          : "glass-card text-slate-900",
+        className
+      )}
+    >
+      <div className="flex items-start justify-between">
+
+        <div>
+          <p
+            className={cn(
+              "text-sm font-semibold",
+              isPrimary
+                ? "text-white/85"
+                : "text-slate-500"
+            )}
+          >
+            {label}
+          </p>
+
+          <h2
+            className={cn(
+              "mt-3 text-4xl font-bold tracking-tight",
+              isPrimary ? "text-white" : "text-slate-900"
+            )}
+          >
+            {value}
+          </h2>
+
+          {hint && (
+            <p
+              className={cn(
+                "mt-2 text-xs",
+                isPrimary
+                  ? "text-white/75"
+                  : "text-slate-500"
+              )}
+            >
+              {hint}
+            </p>
+          )}
+        </div>
+
         {icon && (
-          <div className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-xl",
-            isBlue ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
-          )}>
+          <div
+            className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-2xl",
+              isPrimary
+                ? "bg-white/20 text-white"
+                : "bg-sky-100 text-sky-600"
+            )}
+          >
             {icon}
           </div>
         )}
+
       </div>
-      
-      <p className="mt-3 font-display text-3xl font-bold tracking-tight">
-        {value}
-      </p>
-      
-      {hint && (
-        <p className={cn("mt-1 text-xs", isBlue ? "text-white/70" : "text-muted-foreground")}>
-          {hint}
-        </p>
-      )}
     </div>
   );
 }
