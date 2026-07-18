@@ -104,7 +104,7 @@ function AdminOverview() {
   });
 
   return (
-    <AdminDashboardShell title="Dasbor" description="Dasbor Manajemen Rumah Sakit">
+    <AdminDashboardShell title="Dashboard" description="Dashboard Manajemen Rumah Sakit">
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatCard label="Total Pasien" value={statsQ.data?.patients ?? "—"} icon={<Users className="h-4 w-4" />} />
         <StatCard label="Pendaftaran Hari Ini" value={statsQ.data?.todayReg ?? "—"} icon={<ClipboardPlus className="h-4 w-4" />} />
