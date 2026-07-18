@@ -26,17 +26,17 @@ export function AdminDashboardShell({
 
         {/* Content */}
         <div className="flex flex-1 flex-col">
-          {/* Header - Diubah dari bg-white menjadi bg-blue-50 (biru muda) */}
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-blue-50 px-6 shadow-sm">
+          {/* Header - Biru Solid #00a3e0 */}
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-[#00a3e0] px-6 shadow-sm text-white">
             <div className="flex items-center gap-3">
-              <SidebarTrigger />
+              <SidebarTrigger className="text-white hover:bg-white/20" />
             </div>
 
             <div className="text-right">
               <p className="text-sm font-semibold">
                 {user?.email ?? "Administrator"}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/80">
                 Administrator Sistem
               </p>
             </div>
