@@ -10,6 +10,7 @@ import {
   Megaphone,
   LogOut,
   HeartPulse,
+  BedDouble,
 } from "lucide-react";
 
 import {
@@ -46,9 +47,14 @@ const menuItems = [
     icon: Stethoscope,
   },
   {
-    title: "poli",
+    title: "Poli",
     url: "/admin/clinics",
     icon: Building2,
+  },
+  {
+    title: "Kamar",
+    url: "/admin/rooms",
+    icon: BedDouble,
   },
   {
     title: "Jadwal",
