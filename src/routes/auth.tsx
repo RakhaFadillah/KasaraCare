@@ -5,27 +5,29 @@ import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HeartPulse, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — MediCare Hospital" }, { name: "description", content: "Sign in or create your patient account." }] }),
+  head: () => ({ 
+    meta: [
+      { title: "Admin Login — MediCare" }, 
+      { name: "description", content: "Sign in to the hospital administration portal." }
+    ] 
+  }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Jika sudah login, langsung lempar ke /admin
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) navigate({ to: "/admin" });
     });
   }, [navigate]);
 
@@ -33,35 +35,31 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: window.location.origin, data: { full_name: fullName, phone } },
-        });
-        if (error) throw error;
-        toast.success("Account created. You're signed in.");
-        navigate({ to: "/dashboard" });
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Welcome back");
-        navigate({ to: "/dashboard" });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("Welcome back, Admin");
+      navigate({ to: "/admin" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally { setLoading(false); }
+      toast.error(err instanceof Error ? err.message : "Invalid credentials");
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleGoogle = async () => {
     setLoading(true);
     const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (res.error) { toast.error(res.error.message ?? "Google sign-in failed"); setLoading(false); return; }
+    if (res.error) { 
+      toast.error(res.error.message ?? "Google sign-in failed"); 
+      setLoading(false); 
+      return; 
+    }
     if (res.redirected) return;
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/admin" });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-50">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl gradient-primary text-primary-foreground shadow-soft">
@@ -69,53 +67,56 @@ function AuthPage() {
           </div>
           <div>
             <p className="font-display text-lg font-bold leading-none">MediCare</p>
-            <p className="text-[11px] text-muted-foreground">Patient Portal</p>
+            <p className="text-[11px] text-muted-foreground">Admin Portal</p>
           </div>
         </Link>
 
-        <div className="glass-card rounded-3xl p-8 shadow-elegant">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as "signin" | "signup")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Create account</TabsTrigger>
-            </TabsList>
+        <div className="glass-card rounded-3xl p-8 shadow-elegant bg-white">
+          <div className="mb-6 text-center">
+            <h1 className="text-xl font-semibold tracking-tight">System Login</h1>
+            <p className="text-sm text-muted-foreground mt-1">Enter your credentials to access the dashboard</p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <TabsContent value="signup" className="mt-0 space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="fullName">Full name</Label>
-                  <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required={mode === "signup"} placeholder="Jane Doe" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+62 812…" />
-                </div>
-              </TabsContent>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="At least 6 characters" />
-              </div>
-              <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground shadow-soft">
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {mode === "signin" ? "Sign in" : "Create account"}
-              </Button>
-            </form>
-
-            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+                placeholder="admin@medicare.com" 
+              />
             </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
-              Continue with Google
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                placeholder="••••••••" 
+              />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground shadow-soft mt-2">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sign in securely
             </Button>
-          </Tabs>
+          </form>
+
+          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+          </div>
+          
+          <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
+            Continue with Google
+          </Button>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          By continuing you agree to our privacy policy.
+        
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Unauthorized access is strictly prohibited.
         </p>
       </div>
     </div>
