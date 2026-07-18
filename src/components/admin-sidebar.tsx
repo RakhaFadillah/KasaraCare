@@ -5,7 +5,7 @@ import {
   Building2,
   Stethoscope,
   CalendarClock,
- ClipboardPlus,
+  ClipboardPlus,
   ListOrdered,
   Megaphone,
   LogOut,
@@ -31,42 +31,42 @@ import { toast } from "sonner";
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "Dasbor",
     url: "/admin",
     icon: LayoutDashboard,
   },
   {
-    title: "Patients",
+    title: "Pasien",
     url: "/admin/patients",
     icon: Users,
   },
   {
-    title: "Doctors",
+    title: "Dokter",
     url: "/admin/doctors",
     icon: Stethoscope,
   },
   {
-    title: "Clinics",
+    title: "Klinik",
     url: "/admin/clinics",
     icon: Building2,
   },
   {
-    title: "Schedules",
+    title: "Jadwal",
     url: "/admin/schedules",
     icon: CalendarClock,
   },
   {
-    title: "Registrations",
+    title: "Pendaftaran",
     url: "/admin/registrations",
     icon: ClipboardPlus,
   },
   {
-    title: "Queues",
+    title: "Antrean",
     url: "/admin/queues",
     icon: ListOrdered,
   },
   {
-    title: "Announcements",
+    title: "Pengumuman",
     url: "/admin/announcements",
     icon: Megaphone,
   },
@@ -91,7 +91,7 @@ export default function AdminSidebar() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    toast.success("Signed Out");
+    toast.success("Berhasil Keluar");
     window.location.href = "/auth";
   };
 
@@ -110,7 +110,7 @@ export default function AdminSidebar() {
               </h2>
 
               <p className="text-xs text-muted-foreground">
-                Admin Dashboard
+                Dasbor Admin
               </p>
             </div>
           )}
@@ -154,7 +154,7 @@ export default function AdminSidebar() {
         >
           <LogOut className="h-4 w-4" />
 
-          {!collapsed && "Sign Out"}
+          {!collapsed && "Keluar"}
         </Button>
       </SidebarFooter>
     </Sidebar>

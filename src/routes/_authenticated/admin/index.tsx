@@ -13,7 +13,7 @@ import { todayISO } from "@/lib/format";
 import type { ReactNode } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => ({ meta: [{ title: "Admin Overview — MediCare" }] }),
+  head: () => ({ meta: [{ title: "Ikhtisar Admin — MediCare" }] }),
   component: AdminOverview,
 });
 
@@ -72,7 +72,7 @@ function AdminOverview() {
       
       const byMonth: Record<string, number> = {};
       (data ?? []).forEach((r) => {
-        const key = new Date(r.created_at!).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+        const key = new Date(r.created_at!).toLocaleDateString("id-ID", { month: "short", year: "2-digit" });
         byMonth[key] = (byMonth[key] ?? 0) + 1;
       });
       return Object.entries(byMonth).map(([month, count]) => ({ month, count }));
@@ -104,17 +104,17 @@ function AdminOverview() {
   });
 
   return (
-    <AdminDashboardShell title="Dashboard" description="Hospital Management Dashboard">
+    <AdminDashboardShell title="Dasbor" description="Dasbor Manajemen Rumah Sakit">
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
-        <StatCard label="Total Patients" value={statsQ.data?.patients ?? "—"} icon={<Users className="h-4 w-4" />} />
-        <StatCard label="Today Registrations" value={statsQ.data?.todayReg ?? "—"} icon={<ClipboardPlus className="h-4 w-4" />} />
-        <StatCard label="Doctors" value={statsQ.data?.doctors ?? "—"} icon={<Stethoscope className="h-4 w-4" />} />
-        <StatCard label="Clinics" value={statsQ.data?.clinics ?? "—"} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard label="Active Queue" value={statsQ.data?.activeQueue ?? "—"} icon={<ListOrdered className="h-4 w-4" />} />
+        <StatCard label="Total Pasien" value={statsQ.data?.patients ?? "—"} icon={<Users className="h-4 w-4" />} />
+        <StatCard label="Pendaftaran Hari Ini" value={statsQ.data?.todayReg ?? "—"} icon={<ClipboardPlus className="h-4 w-4" />} />
+        <StatCard label="Dokter" value={statsQ.data?.doctors ?? "—"} icon={<Stethoscope className="h-4 w-4" />} />
+        <StatCard label="Klinik" value={statsQ.data?.clinics ?? "—"} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard label="Antrean Aktif" value={statsQ.data?.activeQueue ?? "—"} icon={<ListOrdered className="h-4 w-4" />} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Registration trend (6 months)">
+        <ChartCard title="Tren Pendaftaran (6 bulan)">
           {monthlyQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={monthlyQ.data}>
@@ -128,7 +128,7 @@ function AdminOverview() {
           )}
         </ChartCard>
 
-        <ChartCard title="Registrations by clinic">
+        <ChartCard title="Pendaftaran Berdasarkan Klinik">
           {clinicDistQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
@@ -141,7 +141,7 @@ function AdminOverview() {
           )}
         </ChartCard>
 
-        <ChartCard title="Doctor activity" className="lg:col-span-2">
+        <ChartCard title="Aktivitas Dokter" className="lg:col-span-2">
           {doctorActivityQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={doctorActivityQ.data}>
@@ -166,4 +166,4 @@ function ChartCard({ title, children, className = "" }: { title: string; childre
       {children}
     </div>
   );
-}   
+}
