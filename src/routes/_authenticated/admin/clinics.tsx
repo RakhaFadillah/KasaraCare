@@ -17,8 +17,8 @@ function ClinicsAdmin() {
         searchKeys={["name", "location"]}
         columns={[
           { key: "name", label: "Nama Poli" },
-          { key: "location", label: "Lokasi" },
           { key: "description", label: "Deskripsi" },
+          { key: "location", label: "Lokasi" },
           { 
             key: "is_active", 
             label: "Status", 
@@ -33,8 +33,7 @@ function ClinicsAdmin() {
           { key: "name", label: "Nama Poli", required: true },
           { key: "description", label: "Deskripsi", type: "textarea" },
           { key: "location", label: "Lokasi" },
-          { key: "icon", label: "Ikon (nama lucide)" },
-          { key: "is_active", label: "Aktif", type: "checkbox" },
+          { key: "is_active", label: "Status Aktif", type: "checkbox" },
         ]}
       />
     </AdminDashboardShell>
