@@ -46,7 +46,7 @@ const menuItems = [
     icon: Stethoscope,
   },
   {
-    title: "Klinik",
+    title: "poli",
     url: "/admin/clinics",
     icon: Building2,
   },
