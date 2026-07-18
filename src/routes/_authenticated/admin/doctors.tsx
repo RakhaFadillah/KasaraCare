@@ -44,9 +44,10 @@ function DoctorsAdmin() {
             key: "status", 
             label: "Status", 
             render: (r) => {
-              const statusLabel = r.status === "Available" ? "Tersedia" : 
+              // PERUBAHAN TAMPILAN DI TABEL
+              const statusLabel = r.status === "Available" ? "Active" : 
                                   r.status === "OnLeave" ? "Cuti" : 
-                                  r.status === "Inactive" ? "Nonaktif" : r.status;
+                                  r.status === "Inactive" ? "Non Active" : r.status;
                                   
               const badgeVariant = r.status === "Available" ? "default" : 
                                    r.status === "OnLeave" ? "outline" : "secondary";
@@ -59,19 +60,17 @@ function DoctorsAdmin() {
           { key: "full_name", label: "Nama Lengkap", required: true },
           { key: "specialization", label: "Spesialisasi", required: true },
           { key: "clinic_id", label: "Poli", type: "select", options },
-          
-          // PERBAIKAN: Menambahkan "as any" untuk mengabaikan error TypeScript
           { key: "license_no", label: "Nomor Izin Praktik", defaultValue: generateLicense() } as any,
-          
           { key: "bio", label: "Bio / Profil", type: "textarea" },
           { 
             key: "status", 
             label: "Status", 
             type: "select", 
+            // PERUBAHAN TAMPILAN DI DROPDOWN FORM
             options: [
-              { value: "Available", label: "Tersedia" }, 
+              { value: "Available", label: "Active" }, 
               { value: "OnLeave", label: "Cuti" }, 
-              { value: "Inactive", label: "Nonaktif" }
+              { value: "Inactive", label: "Non Active" }
             ] 
           },
         ]}
