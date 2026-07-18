@@ -33,8 +33,13 @@ function DoctorsAdmin() {
       <CrudTable<any>
         table="doctors" 
         title="Dokter" 
-        select="*, clinics(name)" 
-        searchKeys={["full_name", "specialization"]}
+        
+        // 1. PERBAIKAN: Gunakan !inner agar fitur pencarian bisa menembus tabel relasi
+        select="*, clinics!inner(name)" 
+        
+        // 2. PERBAIKAN: Tambahkan "clinics.name" agar admin bisa mencari berdasarkan nama poli
+        searchKeys={["full_name", "specialization", "clinics.name"]}
+        
         columns={[
           { key: "full_name", label: "Nama Lengkap" },
           { key: "specialization", label: "Spesialisasi" },
@@ -44,7 +49,6 @@ function DoctorsAdmin() {
             key: "status", 
             label: "Status", 
             render: (r) => {
-              // PERUBAHAN TAMPILAN DI TABEL
               const statusLabel = r.status === "Available" ? "Active" : 
                                   r.status === "OnLeave" ? "Cuti" : 
                                   r.status === "Inactive" ? "Non Active" : r.status;
@@ -66,7 +70,6 @@ function DoctorsAdmin() {
             key: "status", 
             label: "Status", 
             type: "select", 
-            // PERUBAHAN TAMPILAN DI DROPDOWN FORM
             options: [
               { value: "Available", label: "Active" }, 
               { value: "OnLeave", label: "Cuti" }, 
