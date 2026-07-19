@@ -11,6 +11,7 @@ import {
   LogOut,
   HeartPulse,
   BedDouble,
+  Syringe,
 } from "lucide-react";
 
 import {
@@ -45,6 +46,11 @@ const menuItems = [
     title: "Dokter",
     url: "/admin/doctors",
     icon: Stethoscope,
+  },
+  {
+    title: "Perawat",
+    url: "/admin/nurses",
+    icon: Syringe,
   },
   {
     title: "Poli",
