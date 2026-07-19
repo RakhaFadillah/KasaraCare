@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Stethoscope } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/registrations")({
-  head: () => ({ meta: [{ title: "Pendaftaran Operasi — Admin" }] }),
+  head: () => ({ meta: [{ title: "Pendaftaran Operasi" }] }),
   component: RegistrationsAdmin,
 });
 
@@ -21,12 +21,10 @@ function RegistrationsAdmin() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch Pasien
-      const { data: pData } = await supabase.from("patients").select("nama").order("nama", { ascending: true });
+      const { data: pData } = await supabase.from("patients").select("nama");
       if (pData) setPatientOptions(pData.map(p => ({ label: p.nama, value: p.nama })));
 
-      // Fetch Dokter
-      const { data: dData } = await supabase.from("doctors").select("full_name").order("full_name", { ascending: true });
+      const { data: dData } = await supabase.from("doctors").select("full_name");
       if (dData) setDoctorOptions(dData.map(d => ({ label: d.full_name, value: d.full_name })));
     };
     fetchData();
@@ -37,70 +35,58 @@ function RegistrationsAdmin() {
       .from("surgeries")
       .select("*")
       .in("status", ["Belum Operasi", "Sudah Operasi", "Lagi Operasi"]) 
-      .order("tanggal_operasi", { ascending: true })
-      .order("jam_operasi", { ascending: true });
+      .order("tanggal_operasi", { ascending: true });
     
     if (data) setQueueData(data);
     setShowQueue(true);
   };
 
   return (
-    <AdminDashboardShell title="Pendaftaran Operasi" description="Kelola jadwal operasi dan penugasan dokter.">
-      
+    <AdminDashboardShell title="Pendaftaran Operasi" description="Kelola jadwal operasi dan tim dokter.">
       <div className="mb-6 flex justify-end">
-        <Button onClick={loadUpcomingQueue} className="bg-[#00a3e0] text-white font-semibold shadow-md">
-          Lihat Jadwal Operasi Terdekat
-        </Button>
+        <Button onClick={loadUpcomingQueue} className="bg-[#00a3e0] text-white">Lihat Jadwal Operasi</Button>
       </div>
 
       {showQueue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-              <h2 className="text-xl font-bold text-gray-800">Antrean Operasi Terdekat</h2>
-              <Button variant="outline" size="sm" onClick={() => setShowQueue(false)}>Tutup</Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Antrean Operasi</h2>
+              <Button variant="outline" onClick={() => setShowQueue(false)}>Tutup</Button>
             </div>
-            
-            <div className="p-6 overflow-y-auto space-y-4">
-              {queueData.map((op) => (
-                <div key={op.id} className="p-5 border border-gray-200 rounded-xl flex justify-between items-center shadow-sm">
-                  <div>
-                    <div className="font-bold text-lg text-gray-800">{op.nama_pasien}</div>
-                    <div className="text-sm text-gray-600">{op.nama_operasi}</div>
-                    <div className="text-sm font-semibold text-[#00a3e0] mt-2 flex items-center gap-1">
-                      <Stethoscope className="h-4 w-4" /> {op.nama_dokter}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold">{op.tanggal_operasi}</div>
-                    <div className="text-sm">{op.jam_operasi}</div>
-                    <Badge variant="secondary" className="mt-2">{op.status}</Badge>
+            {queueData.map((op) => (
+              <div key={op.id} className="p-4 border-b flex justify-between items-center">
+                <div>
+                  <div className="font-bold">{op.nama_pasien}</div>
+                  <div className="text-sm text-gray-500">{op.nama_operasi}</div>
+                  <div className="flex items-center text-sm font-semibold text-blue-600 mt-1">
+                    <Stethoscope className="h-3 w-3 mr-1" /> {op.nama_dokter || "Dokter Belum Ditentukan"}
                   </div>
                 </div>
-              ))}
-            </div>
+                <Badge>{op.status}</Badge>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
       <CrudTable<any>
         table="surgeries"
-        title="Data Operasi"
-        searchKeys={["nama_pasien", "nama_dokter", "nama_operasi", "status"]}
+        title="Daftar Operasi"
+        searchKeys={["nama_pasien", "nama_dokter", "nama_operasi"]}
         columns={[
           { key: "nama_pasien", label: "Nama Pasien" },
-          { key: "nama_dokter", label: "Dokter" },
+          // PERBAIKAN: Menampilkan nama dokter secara eksplisit
+          { key: "nama_dokter", label: "Dokter", render: (r) => <span className="font-medium text-blue-600">{r.nama_dokter || "-"}</span> },
           { key: "nama_operasi", label: "Tindakan" },
-          { key: "tanggal_operasi", label: "Tgl Operasi" },
           { key: "status", label: "Status", render: (r) => <Badge variant="outline">{r.status}</Badge> },
         ]}
         fields={[
-          { key: "nama_pasien", label: "Pasien", type: "select", required: true, options: patientOptions },
-          { key: "nama_dokter", label: "Dokter Penanggung Jawab", type: "select", required: true, options: doctorOptions },
-          { key: "nama_operasi", label: "Nama Operasi", required: true },
+          { key: "nama_pasien", label: "Pasien", type: "select", options: patientOptions },
+          { key: "nama_dokter", label: "Dokter", type: "select", options: doctorOptions },
+          { key: "nama_operasi", label: "Nama Operasi" },
           { key: "status", label: "Status", type: "select", options: ["Belum Operasi", "Sudah Operasi", "Lagi Operasi", "Selesai"].map(v => ({value:v, label:v})) },
-          { key: "tanggal_operasi", label: "Tgl Operasi", type: "date", required: true },
-          { key: "jam_operasi", label: "Jam Operasi", required: true },
+          { key: "tanggal_operasi", label: "Tgl Operasi", type: "date" },
         ]}
       />
     </AdminDashboardShell>
