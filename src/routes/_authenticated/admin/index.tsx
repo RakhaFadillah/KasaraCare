@@ -30,7 +30,9 @@ function AdminOverview() {
         supabase.from("clinics").select("*", { count: "exact", head: true }),
         supabase.from("nurses").select("*", { count: "exact", head: true }),
         supabase.from("rooms").select("*", { count: "exact", head: true }),
-        supabase.from("registrations").select("*", { count: "exact", head: true }).eq("status", "pre-op"),
+        
+        // PERBAIKAN: Mengambil data dari tabel surgeries (Pendaftaran Operasi) dengan status 'Belum Operasi'
+        supabase.from("surgeries").select("*", { count: "exact", head: true }).eq("status", "Belum Operasi"),
         
         // Rawat Inap: Membaca dari tabel pasien yang jenis layanannya mengandung kata "Rawat Inap"
         supabase.from("patients").select("*", { count: "exact", head: true }).ilike("jenis_layanan", "%Rawat Inap%"),

@@ -74,7 +74,7 @@ const menuItems = [
     icon: CalendarClock,
   },
   {
-    title: "Pendaftaran",
+    title: "Pendaftaran Operasi", // <-- Nama menu sudah diubah di sini
     url: "/admin/registrations",
     icon: ClipboardPlus,
   },
