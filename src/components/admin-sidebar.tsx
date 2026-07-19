@@ -79,11 +79,6 @@ const menuItems = [
     icon: ClipboardPlus,
   },
   {
-    title: "Antrean",
-    url: "/admin/queues",
-    icon: ListOrdered,
-  },
-  {
     title: "Pengumuman",
     url: "/admin/announcements",
     icon: Megaphone,
