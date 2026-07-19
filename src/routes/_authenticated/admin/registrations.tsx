@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Stethoscope } from "lucide-react";
@@ -24,7 +25,7 @@ function RegistrationsAdmin() {
       const { data: pData } = await supabase.from("patients").select("nama").order("nama", { ascending: true });
       if (pData) setPatientOptions(pData.map(p => ({ label: p.nama, value: p.nama })));
 
-      // Fetch Dokter dari tabel public.doctors (sesuai gambar Anda)
+      // Fetch Dokter
       const { data: dData } = await supabase.from("doctors").select("full_name").order("full_name", { ascending: true });
       if (dData) setDoctorOptions(dData.map(d => ({ label: d.full_name, value: d.full_name })));
     };
@@ -47,7 +48,7 @@ function RegistrationsAdmin() {
     <AdminDashboardShell title="Pendaftaran Operasi" description="Kelola jadwal operasi dan penugasan dokter.">
       
       <div className="mb-6 flex justify-end">
-        <Button onClick={loadUpcomingQueue} className="bg-[#00a3e0] text-white font-semibold">
+        <Button onClick={loadUpcomingQueue} className="bg-[#00a3e0] text-white font-semibold shadow-md">
           Lihat Jadwal Operasi Terdekat
         </Button>
       </div>
@@ -73,7 +74,7 @@ function RegistrationsAdmin() {
                   <div className="text-right">
                     <div className="font-bold">{op.tanggal_operasi}</div>
                     <div className="text-sm">{op.jam_operasi}</div>
-                    <Badge className="mt-2">{op.status}</Badge>
+                    <Badge variant="secondary" className="mt-2">{op.status}</Badge>
                   </div>
                 </div>
               ))}
@@ -91,7 +92,7 @@ function RegistrationsAdmin() {
           { key: "nama_dokter", label: "Dokter" },
           { key: "nama_operasi", label: "Tindakan" },
           { key: "tanggal_operasi", label: "Tgl Operasi" },
-          { key: "status", label: "Status", render: (r) => <Badge>{r.status}</Badge> },
+          { key: "status", label: "Status", render: (r) => <Badge variant="outline">{r.status}</Badge> },
         ]}
         fields={[
           { key: "nama_pasien", label: "Pasien", type: "select", required: true, options: patientOptions },
