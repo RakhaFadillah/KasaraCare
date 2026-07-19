@@ -12,6 +12,7 @@ import {
   HeartPulse,
   BedDouble,
   Syringe,
+  Layers,
 } from "lucide-react";
 
 import {
@@ -61,6 +62,11 @@ const menuItems = [
     title: "Kamar",
     url: "/admin/rooms",
     icon: BedDouble,
+  },
+  {
+    title: "Jenis Layanan",
+    url: "/admin/services",
+    icon: Layers,
   },
   {
     title: "Jadwal",
