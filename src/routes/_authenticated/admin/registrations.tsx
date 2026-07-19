@@ -5,6 +5,7 @@ import { CrudTable } from "@/components/crud-table";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Stethoscope } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/registrations")({
   head: () => ({ meta: [{ title: "Pendaftaran Operasi — Admin" }] }),
@@ -13,21 +14,23 @@ export const Route = createFileRoute("/_authenticated/admin/registrations")({
 
 function RegistrationsAdmin() {
   const [patientOptions, setPatientOptions] = useState([]);
+  const [doctorOptions, setDoctorOptions] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [queueData, setQueueData] = useState([]);
 
-  // Mengambil daftar nama pasien dari database untuk Dropdown
   useEffect(() => {
-    const fetchPatients = async () => {
-      const { data } = await supabase.from("patients").select("nama").order("nama", { ascending: true });
-      if (data) {
-        setPatientOptions(data.map(p => ({ label: p.nama, value: p.nama })));
-      }
+    const fetchData = async () => {
+      // Fetch Pasien
+      const { data: pData } = await supabase.from("patients").select("nama").order("nama", { ascending: true });
+      if (pData) setPatientOptions(pData.map(p => ({ label: p.nama, value: p.nama })));
+
+      // Fetch Dokter dari tabel public.doctors (sesuai gambar Anda)
+      const { data: dData } = await supabase.from("doctors").select("full_name").order("full_name", { ascending: true });
+      if (dData) setDoctorOptions(dData.map(d => ({ label: d.full_name, value: d.full_name })));
     };
-    fetchPatients();
+    fetchData();
   }, []);
 
-  // Memuat jadwal operasi terdekat
   const loadUpcomingQueue = async () => {
     const { data } = await supabase
       .from("surgeries")
@@ -41,16 +44,14 @@ function RegistrationsAdmin() {
   };
 
   return (
-    <AdminDashboardShell title="Pendaftaran Operasi" description="Kelola data pendaftaran operasi pasien, jadwal, dan status tindakan.">
+    <AdminDashboardShell title="Pendaftaran Operasi" description="Kelola jadwal operasi dan penugasan dokter.">
       
-      {/* Tombol Antrean Jadwal Operasi di atas pencarian */}
       <div className="mb-6 flex justify-end">
-        <Button onClick={loadUpcomingQueue} className="bg-[#00a3e0] hover:bg-[#008bc0] text-white shadow-md font-semibold">
+        <Button onClick={loadUpcomingQueue} className="bg-[#00a3e0] text-white font-semibold">
           Lihat Jadwal Operasi Terdekat
         </Button>
       </div>
 
-      {/* Modal / Popup Jadwal Operasi Terdekat */}
       {showQueue && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
@@ -60,98 +61,45 @@ function RegistrationsAdmin() {
             </div>
             
             <div className="p-6 overflow-y-auto space-y-4">
-              {queueData.length === 0 ? (
-                <div className="text-center text-gray-500 py-10">Tidak ada jadwal operasi dalam waktu dekat.</div>
-              ) : (
-                queueData.map((op) => (
-                  <div key={op.id} className="p-4 border border-gray-200 rounded-xl flex justify-between items-center bg-white shadow-sm hover:shadow-md transition-all">
-                    <div>
-                      <div className="font-bold text-lg text-gray-800">{op.nama_pasien}</div>
-                      <div className="text-sm font-medium text-gray-600">{op.nama_operasi}</div>
-                      <div className="text-xs text-gray-500 mt-1">{op.keterangan}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-[#00a3e0]">{op.tanggal_operasi}</div>
-                      <div className="text-sm font-medium text-gray-700">{op.jam_operasi} WIB</div>
-                      <div className="mt-2 inline-block px-3 py-1 text-xs font-bold rounded-full border border-gray-300">
-                        {op.status}
-                      </div>
+              {queueData.map((op) => (
+                <div key={op.id} className="p-5 border border-gray-200 rounded-xl flex justify-between items-center shadow-sm">
+                  <div>
+                    <div className="font-bold text-lg text-gray-800">{op.nama_pasien}</div>
+                    <div className="text-sm text-gray-600">{op.nama_operasi}</div>
+                    <div className="text-sm font-semibold text-[#00a3e0] mt-2 flex items-center gap-1">
+                      <Stethoscope className="h-4 w-4" /> {op.nama_dokter}
                     </div>
                   </div>
-                ))
-              )}
+                  <div className="text-right">
+                    <div className="font-bold">{op.tanggal_operasi}</div>
+                    <div className="text-sm">{op.jam_operasi}</div>
+                    <Badge className="mt-2">{op.status}</Badge>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Tabel Data Registrasi Operasi */}
       <CrudTable<any>
         table="surgeries"
         title="Data Operasi"
-        searchKeys={["nama_pasien", "nama_operasi", "status"]}
+        searchKeys={["nama_pasien", "nama_dokter", "nama_operasi", "status"]}
         columns={[
           { key: "nama_pasien", label: "Nama Pasien" },
-          { key: "nama_operasi", label: "Tindakan Operasi" },
+          { key: "nama_dokter", label: "Dokter" },
+          { key: "nama_operasi", label: "Tindakan" },
           { key: "tanggal_operasi", label: "Tgl Operasi" },
-          { key: "jam_operasi", label: "Jam" },
-          { 
-            key: "status", 
-            label: "Status", 
-            render: (r) => {
-              // Logika warna status
-              let bgColor = "#e5e7eb"; // Belum Operasi (Abu-abu)
-              let textColor = "#374151";
-
-              if (r.status === "Sudah Operasi") {
-                bgColor = "#3b82f6"; // Biru
-                textColor = "#ffffff";
-              } else if (r.status === "Lagi Operasi") {
-                bgColor = "#22c55e"; // Hijau
-                textColor = "#ffffff";
-              } else if (r.status === "Selesai") {
-                bgColor = "#f97316"; // Orange
-                textColor = "#ffffff";
-              }
-
-              return (
-                <span style={{ backgroundColor: bgColor, color: textColor }} className="px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-                  {r.status}
-                </span>
-              );
-            } 
-          },
-          { 
-            key: "tanggal_selesai", 
-            label: "Selesai",
-            render: (r) => r.tanggal_selesai ? `${r.tanggal_selesai} (${r.jam_selesai})` : "-"
-          },
+          { key: "status", label: "Status", render: (r) => <Badge>{r.status}</Badge> },
         ]}
         fields={[
-          { 
-            key: "nama_pasien", 
-            label: "Nama Pasien (Pilih dari Database)", 
-            type: "select", 
-            required: true,
-            options: patientOptions.length > 0 ? patientOptions : [{ label: "Memuat Data Pasien...", value: "" }]
-          },
+          { key: "nama_pasien", label: "Pasien", type: "select", required: true, options: patientOptions },
+          { key: "nama_dokter", label: "Dokter Penanggung Jawab", type: "select", required: true, options: doctorOptions },
           { key: "nama_operasi", label: "Nama Operasi", required: true },
-          { key: "keterangan", label: "Keterangan Operasi", type: "textarea" },
-          { 
-            key: "status", 
-            label: "Status Operasi", 
-            type: "select", 
-            options: [
-              { value: "Belum Operasi", label: "Belum Operasi" },
-              { value: "Sudah Operasi", label: "Sudah Operasi (Biru)" },
-              { value: "Lagi Operasi", label: "Lagi Operasi (Hijau)" },
-              { value: "Selesai", label: "Selesai (Orange)" }
-            ] 
-          },
-          { key: "tanggal_operasi", label: "Tanggal Mulai Operasi", type: "date", required: true },
-          { key: "jam_operasi", label: "Jam Mulai (Contoh: 08:30)", required: true },
-          { key: "tanggal_selesai", label: "Tanggal Selesai (Kosongkan jika belum)", type: "date" },
-          { key: "jam_selesai", label: "Jam Selesai (Kosongkan jika belum)" },
+          { key: "status", label: "Status", type: "select", options: ["Belum Operasi", "Sudah Operasi", "Lagi Operasi", "Selesai"].map(v => ({value:v, label:v})) },
+          { key: "tanggal_operasi", label: "Tgl Operasi", type: "date", required: true },
+          { key: "jam_operasi", label: "Jam Operasi", required: true },
         ]}
       />
     </AdminDashboardShell>
