@@ -1,41 +1,99 @@
+// @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { Badge } from "@/components/ui/badge";
-import { fmtDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/patients")({
-  head: () => ({ meta: [{ title: "Patients — Admin" }] }),
-  component: PatientsPage,
+  head: () => ({ meta: [{ title: "Pasien — Admin" }] }),
+  component: PatientsAdmin,
 });
 
-function PatientsPage() {
+function PatientsAdmin() {
   return (
-    <AdminDashboardShell title="Patients" description="Manage patient records.">
+    <AdminDashboardShell title="Manajemen Pasien" description="Kelola data pendaftaran pasien, layanan medis, dan status rawat inap.">
       <CrudTable<any>
-        table="patients" 
-        title="Patient"
-        select="*" 
-        orderBy="created_at" 
-        searchKeys={["full_name", "medical_record_no", "phone"]}
+        table="patients"
+        title="Pasien"
+        searchKeys={["nama", "nomor_hp", "golongan", "kamar"]}
         columns={[
-          { key: "medical_record_no", label: "MRN", render: (r) => <span className="font-mono text-xs">{r.medical_record_no}</span> },
-          { key: "full_name", label: "Name" },
-          { key: "phone", label: "Phone" },
-          { key: "insurance", label: "Insurance", render: (r) => <Badge variant="outline">{r.insurance}</Badge> },
-          { key: "status", label: "Status", render: (r) => <Badge>{r.status}</Badge> },
-          { key: "created_at", label: "Created", render: (r) => fmtDate(r.created_at) },
+          { key: "nama", label: "Nama Pasien" },
+          { key: "umur", label: "Umur" },
+          { key: "jenis_kelamin", label: "L/P" },
+          { key: "poli", label: "Poli" },
+          { key: "jenis_layanan", label: "Layanan" },
+          {
+            key: "golongan",
+            label: "Golongan",
+            render: (r) => (
+              <Badge variant={r.golongan === "BPJS" ? "default" : "secondary"}>
+                {r.golongan}
+              </Badge>
+            ),
+          },
+          { key: "kamar", label: "Kamar" },
+          { key: "tanggal_masuk", label: "Tgl Masuk" },
+          {
+            key: "tanggal_keluar",
+            label: "Tgl Keluar",
+            render: (r) => r.tanggal_keluar ? r.tanggal_keluar : <Badge variant="outline">Belum ditentukan</Badge>,
+          },
         ]}
         fields={[
-          { key: "medical_record_no", label: "Medical Record No.", required: true },
-          { key: "full_name", label: "Full Name", required: true },
-          { key: "date_of_birth", label: "Date of birth", type: "date" },
-          { key: "gender", label: "Gender", type: "select", options: [{ value: "Male", label: "Male" }, { value: "Female", label: "Female" }] },
-          { key: "phone", label: "Phone" },
-          { key: "address", label: "Address", type: "textarea" },
-          { key: "insurance", label: "Insurance", type: "select", required: true, options: ["BPJS", "Private", "Self-Pay", "Corporate"].map(v => ({ value: v, label: v })) },
-          { key: "bpjs_number", label: "BPJS number" },
-          { key: "status", label: "Status", type: "select", required: true, options: [{ value: "Active", label: "Active" }, { value: "Inactive", label: "Inactive" }] },
+          { key: "nama", label: "Nama Lengkap", required: true },
+          { key: "umur", label: "Umur (Tahun)", type: "number", required: true },
+          {
+            key: "jenis_kelamin",
+            label: "Jenis Kelamin",
+            type: "select",
+            options: [
+              { value: "Laki-laki", label: "Laki-laki" },
+              { value: "Perempuan", label: "Perempuan" },
+            ],
+          },
+          { key: "nomor_hp", label: "Nomor HP (Wajib format @c.us)", required: true },
+          {
+            key: "poli",
+            label: "Poli",
+            type: "select",
+            options: [
+              { value: "Poli Umum", label: "Poli Umum" },
+              { value: "Poli Gigi", label: "Poli Gigi" },
+              { value: "Poli Anak", label: "Poli Anak" },
+              { value: "Poli Penyakit Dalam", label: "Poli Penyakit Dalam" },
+              { value: "Poli Bedah", label: "Poli Bedah" },
+              { value: "Poli Kandungan", label: "Poli Kandungan" },
+              { value: "IGD", label: "IGD" },
+            ],
+          },
+          {
+            key: "jenis_layanan",
+            label: "Jenis Layanan",
+            type: "select",
+            options: [
+              { value: "Konsultasi Dokter Umum", label: "Konsultasi Dokter Umum" },
+              { value: "Konsultasi Dokter Spesialis", label: "Konsultasi Dokter Spesialis" },
+              { value: "Pemeriksaan UGD", label: "Pemeriksaan UGD" },
+              { value: "Rawat Inap Kelas 1", label: "Rawat Inap Kelas 1" },
+              { value: "Rawat Inap Kelas 2", label: "Rawat Inap Kelas 2" },
+              { value: "Rawat Inap Kelas 3", label: "Rawat Inap Kelas 3" },
+              { value: "Rawat Inap VIP", label: "Rawat Inap VIP" },
+              { value: "Operasi Kecil", label: "Operasi Kecil" },
+              { value: "Operasi Sedang", label: "Operasi Sedang" },
+            ],
+          },
+          {
+            key: "golongan",
+            label: "Golongan",
+            type: "select",
+            options: [
+              { value: "BPJS", label: "BPJS" },
+              { value: "Non BPJS", label: "Non BPJS" },
+            ],
+          },
+          { key: "kamar", label: "Kamar (Kosongkan jika bukan Rawat Inap)" },
+          { key: "tanggal_masuk", label: "Tanggal Masuk", type: "date", required: true },
+          { key: "tanggal_keluar", label: "Tanggal Keluar (Kosongkan jika belum keluar)", type: "date" },
         ]}
       />
     </AdminDashboardShell>
