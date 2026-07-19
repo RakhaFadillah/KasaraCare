@@ -21,10 +21,11 @@ function RegistrationsAdmin() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: pData } = await supabase.from("patients").select("nama");
+      // Mengambil data pasien dan dokter
+      const { data: pData } = await supabase.from("patients").select("nama").order("nama");
+      const { data: dData } = await supabase.from("doctors").select("full_name").order("full_name");
+      
       if (pData) setPatientOptions(pData.map(p => ({ label: p.nama, value: p.nama })));
-
-      const { data: dData } = await supabase.from("doctors").select("full_name");
       if (dData) setDoctorOptions(dData.map(d => ({ label: d.full_name, value: d.full_name })));
     };
     fetchData();
@@ -34,7 +35,6 @@ function RegistrationsAdmin() {
     const { data } = await supabase
       .from("surgeries")
       .select("*")
-      .in("status", ["Belum Operasi", "Sudah Operasi", "Lagi Operasi"]) 
       .order("tanggal_operasi", { ascending: true });
     
     if (data) setQueueData(data);
@@ -60,10 +60,10 @@ function RegistrationsAdmin() {
                   <div className="font-bold">{op.nama_pasien}</div>
                   <div className="text-sm text-gray-500">{op.nama_operasi}</div>
                   <div className="flex items-center text-sm font-semibold text-blue-600 mt-1">
-                    <Stethoscope className="h-3 w-3 mr-1" /> {op.nama_dokter || "Dokter Belum Ditentukan"}
+                    <Stethoscope className="h-3 w-3 mr-1" /> {op.nama_dokter}
                   </div>
                 </div>
-                <Badge>{op.status}</Badge>
+                <Badge variant="secondary">{op.status}</Badge>
               </div>
             ))}
           </div>
@@ -76,17 +76,18 @@ function RegistrationsAdmin() {
         searchKeys={["nama_pasien", "nama_dokter", "nama_operasi"]}
         columns={[
           { key: "nama_pasien", label: "Nama Pasien" },
-          // PERBAIKAN: Menampilkan nama dokter secara eksplisit
-          { key: "nama_dokter", label: "Dokter", render: (r) => <span className="font-medium text-blue-600">{r.nama_dokter || "-"}</span> },
+          { key: "nama_dokter", label: "Dokter", render: (r) => <span className="font-medium text-blue-600">{r.nama_dokter}</span> },
           { key: "nama_operasi", label: "Tindakan" },
-          { key: "status", label: "Status", render: (r) => <Badge variant="outline">{r.status}</Badge> },
+          { key: "status", label: "Status", render: (r) => <Badge>{r.status}</Badge> },
+          { key: "tanggal_operasi", label: "Tgl Operasi" },
         ]}
         fields={[
-          { key: "nama_pasien", label: "Pasien", type: "select", options: patientOptions },
-          { key: "nama_dokter", label: "Dokter", type: "select", options: doctorOptions },
-          { key: "nama_operasi", label: "Nama Operasi" },
-          { key: "status", label: "Status", type: "select", options: ["Belum Operasi", "Sudah Operasi", "Lagi Operasi", "Selesai"].map(v => ({value:v, label:v})) },
-          { key: "tanggal_operasi", label: "Tgl Operasi", type: "date" },
+          { key: "nama_pasien", label: "Nama Pasien", type: "select", required: true, options: patientOptions },
+          { key: "nama_dokter", label: "Nama Dokter", type: "select", required: true, options: doctorOptions },
+          { key: "nama_operasi", label: "Nama Operasi", required: true },
+          { key: "status", label: "Status", type: "select", required: true, options: ["Belum Operasi", "Sudah Operasi", "Lagi Operasi", "Selesai"].map(v => ({value:v, label:v})) },
+          { key: "tanggal_operasi", label: "Tgl Operasi", type: "date", required: true },
+          { key: "jam_operasi", label: "Jam Operasi (Contoh: 08:00)", required: true },
         ]}
       />
     </AdminDashboardShell>
