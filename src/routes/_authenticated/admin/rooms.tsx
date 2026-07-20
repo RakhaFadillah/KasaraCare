@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
-import { BedDouble, X, Users, Save, Home } from "lucide-react";
+import { BedDouble, X, Users, Save, Home, Wrench } from "lucide-react"; 
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/rooms")({
@@ -32,17 +32,16 @@ function ManajemenKamar() {
   useEffect(() => {
     if (selectedRoom) {
       const fetchPatients = async () => {
-        // Mencari pasien yang kolom 'kamar'-nya sama dengan nomor kamar ini
         const { data } = await supabase
           .from("patients")
           .select("nama, poli")
           .eq("kamar", selectedRoom.room_number)
-          .is("tanggal_keluar", null); // Hanya pasien yang belum keluar
+          .is("tanggal_keluar", null); 
         
         setRoomPatients(data || []);
       };
       fetchPatients();
-      setFormData(selectedRoom); // Set data awal untuk form edit
+      setFormData(selectedRoom);
     }
   }, [selectedRoom]);
 
@@ -63,9 +62,8 @@ function ManajemenKamar() {
 
       if (error) throw error;
       
-      // Refresh data di layar
       await queryClient.invalidateQueries(["rooms-dashboard"]);
-      setSelectedRoom(null); // Tutup modal
+      setSelectedRoom(null); 
     } catch (error) {
       alert("Gagal menyimpan data kamar!");
       console.error(error);
@@ -74,7 +72,6 @@ function ManajemenKamar() {
     }
   };
 
-  // Kalkulasi Data Global Sesuai Permintaan
   const totalKamar = rooms.length;
   const totalKasur = rooms.reduce((acc, room) => acc + (room.capacity || 0), 0);
   const terisi = rooms.reduce((acc, room) => acc + (room.occupied_beds || 0), 0);
@@ -85,12 +82,8 @@ function ManajemenKamar() {
   return (
     <AdminDashboardShell title="Manajemen Kamar" description="Kelola data ruangan, kapasitas, dan jumlah kasur terisi.">
       
-      {/* BACKGROUND LIGHT MODE */}
       <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
         
-        {/* ========================================== */}
-        {/* BAGIAN 1: SUMMARY CARDS TOP                  */}
-        {/* ========================================== */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <SummaryCard title="Total Kamar" value={totalKamar} valueColor="text-blue-600" />
           <SummaryCard title="Total Isi Kasur" value={totalKasur} valueColor="text-gray-800" />
@@ -98,9 +91,6 @@ function ManajemenKamar() {
           <SummaryCard title="Perbaikan" value={perbaikan} valueColor="text-red-600" />
         </div>
 
-        {/* ========================================== */}
-        {/* BAGIAN 2: ROOM GRID CARDS (BISA DIKLIK)      */}
-        {/* ========================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {rooms.map((room) => {
             const capacity = room.capacity || 0;
@@ -117,7 +107,6 @@ function ManajemenKamar() {
                 onClick={() => setSelectedRoom(room)}
                 className="bg-white border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer rounded-2xl p-5 flex flex-col justify-between shadow-sm"
               >
-                {/* Header Kamar */}
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h3 className="text-gray-900 font-bold text-xl">{room.room_number}</h3>
@@ -128,7 +117,6 @@ function ManajemenKamar() {
                   </div>
                 </div>
 
-                {/* 3 Kotak Status (Tersedia, Terisi, Perbaikan) */}
                 <div className="flex justify-between items-center mb-6 space-x-2">
                   <div className="bg-green-50 border border-green-100 rounded-xl px-2 py-3 flex-1 text-center">
                     <p className="text-green-700 text-[11px] font-semibold mb-1">Tersedia</p>
@@ -144,7 +132,6 @@ function ManajemenKamar() {
                   </div>
                 </div>
 
-                {/* Progress Bar & Footer */}
                 <div>
                   <div className="w-full bg-gray-100 rounded-full h-2 mb-2 overflow-hidden">
                     <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${room.status === "Perbaikan" ? 100 : occupancyRate}%` }}></div>
@@ -160,14 +147,10 @@ function ManajemenKamar() {
 
       </div>
 
-      {/* ========================================== */}
-      {/* BAGIAN 3: MODAL EDIT & DAFTAR PASIEN         */}
-      {/* ========================================== */}
       {selectedRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
             
-            {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-100 p-2 rounded-lg text-blue-700"><Home size={24} /></div>
@@ -182,7 +165,6 @@ function ManajemenKamar() {
             </div>
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Form Edit Data Kamar */}
               <div>
                 <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <Wrench size={18} className="text-blue-500" /> Form Pengaturan
@@ -241,7 +223,6 @@ function ManajemenKamar() {
                 </form>
               </div>
 
-              {/* Daftar Pasien di Kamar Ini */}
               <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
                 <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <Users size={18} className="text-green-600" /> Pasien Saat Ini
@@ -277,7 +258,6 @@ function ManajemenKamar() {
   );
 }
 
-// Komponen Card Summary (Tema Terang)
 function SummaryCard({ title, value, valueColor }: { title: string, value: number | string, valueColor: string }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-center shadow-sm hover:shadow-md transition">
