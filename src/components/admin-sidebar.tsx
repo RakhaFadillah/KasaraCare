@@ -96,7 +96,7 @@ export default function AdminSidebar() {
           {/* LOGO CHOPPER BARU */}
           {/* ========================================== */}
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-lg shadow-blue-600/20 bg-blue-500">
-            <img src="/chopper-logo.jpg" alt="ChopperCare Logo" className="h-full w-full object-cover" />
+            <img src="/Desain tanpa judul (12).png" alt="ChopperCare Logo" className="h-full w-full object-cover" />
           </div>
 
           <div className="flex flex-col truncate group-data-[collapsible=icon]:hidden">
