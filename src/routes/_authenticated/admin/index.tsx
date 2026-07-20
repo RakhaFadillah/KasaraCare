@@ -6,13 +6,12 @@ import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
 import { 
-  Users, Stethoscope, ClipboardPlus, BedDouble, UserCheck
+  Users, Stethoscope, ClipboardPlus, BedDouble, UserCheck, CalendarClock
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, 
-  AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Cell
+  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Cell
 } from "recharts";
-import type { ReactNode } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Dashboard Admin — MediCare" }] }),
@@ -21,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 function AdminOverview() {
   const [timeScale, setTimeScale] = useState('bulanan');
+  const [opTimeScale, setOpTimeScale] = useState('bulanan');
 
   // 1. QUERY STATISTIK METRIK KOTAK ATAS
   const statsQ = useQuery({
@@ -42,29 +42,31 @@ function AdminOverview() {
     },
   });
 
-  // 2. QUERY DATA GRAFIK (Menarik data asli pasien dan kamar)
+  // 2. QUERY DATA GRAFIK (Pasien, Kamar, dan Operasi)
   const chartDataQ = useQuery({
     queryKey: ["chart-real-data"],
     queryFn: async () => {
-      const [patientsRes, roomsRes] = await Promise.all([
+      const [patientsRes, roomsRes, surgeriesRes] = await Promise.all([
         supabase.from("patients").select("tanggal_masuk, tanggal_keluar, golongan"),
-        supabase.from("rooms").select("created_at, occupied_beds")
+        supabase.from("rooms").select("created_at, occupied_beds"),
+        supabase.from("surgeries").select("created_at") // Membaca tanggal pendaftaran operasi
       ]);
       return {
         patients: patientsRes.data || [],
-        rooms: roomsRes.data || []
+        rooms: roomsRes.data || [],
+        surgeries: surgeriesRes.data || []
       };
     }
   });
 
-  // 3. QUERY DOKTER AKTIF (SUDAH DIPERBAIKI SESUAI DATABASE)
+  // 3. QUERY DOKTER AKTIF
   const activeDoctorsQ = useQuery({
     queryKey: ["active-doctors"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("doctors")
         .select("full_name, specialization, status")
-        .ilike("status", "Available") // Diubah dari Active menjadi Available
+        .ilike("status", "Available") 
         .limit(8); 
       
       if (error) {
@@ -75,18 +77,50 @@ function AdminOverview() {
     }
   });
 
+  // 4. QUERY TABEL JADWAL TERDEKAT (Otomatis Filter Selesai & Limit 5)
+  const schedulesTableQ = useQuery({
+    queryKey: ["upcoming-schedules-table"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase
+        .from("schedules")
+        .select("*, doctors(full_name), patients(nama)")
+        .gte("tanggal", today)
+        .order("tanggal", { ascending: true })
+        .order("jam", { ascending: true });
+      
+      // Filter Cerdas: Membuang jadwal yang sudah 'Done' atau 'Selesai', lalu ambil 5 teratas
+      const filteredSchedules = (data || []).filter(
+        sch => sch.status?.toLowerCase() !== 'done' && sch.status?.toLowerCase() !== 'selesai'
+      );
+      
+      return filteredSchedules.slice(0, 5);
+    }
+  });
+
   // ==========================================
   // LOGIKA PERHITUNGAN DATA OTOMATIS
   // ==========================================
   const parsedData = useMemo(() => {
     const pData = chartDataQ.data?.patients || [];
     const rData = chartDataQ.data?.rooms || [];
+    const sData = chartDataQ.data?.surgeries || [];
 
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     const todayString = now.toISOString().split('T')[0];
 
+    const getWeekNumber = (d: Date) => {
+      const date = new Date(d.getTime());
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+      const week1 = new Date(date.getFullYear(), 0, 4);
+      return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
+    const currentWeekNumber = getWeekNumber(now);
+
+    // Wadah Data Kunjungan Pasien
     const rawMingguan = [
       { name: 'Min', kunjungan: 0 }, { name: 'Sen', kunjungan: 0 }, { name: 'Sel', kunjungan: 0 },
       { name: 'Rab', kunjungan: 0 }, { name: 'Kam', kunjungan: 0 }, { name: 'Jum', kunjungan: 0 }, { name: 'Sab', kunjungan: 0 }
@@ -102,27 +136,17 @@ function AdminOverview() {
     let bpjsTotal = 0, bpjsHari = 0, bpjsMinggu = 0, bpjsBulan = 0;
     let nonBpjsTotal = 0, nonBpjsHari = 0, nonBpjsMinggu = 0, nonBpjsBulan = 0;
 
-    const getWeekNumber = (d: Date) => {
-      const date = new Date(d.getTime());
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-      const week1 = new Date(date.getFullYear(), 0, 4);
-      return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-    };
-    const currentWeekNumber = getWeekNumber(now);
-
     pData.forEach(p => {
       if (!p.tanggal_masuk) return;
       const d = new Date(p.tanggal_masuk);
       const dMonth = d.getMonth();
       const dYear = d.getFullYear();
-      const dString = p.tanggal_masuk;
-
+      
       rawMingguan[d.getDay()].kunjungan += 1; 
       if (dYear === currentYear) dataBulanan[dMonth].kunjungan += 1; 
       tahunanMap[dYear] = (tahunanMap[dYear] || 0) + 1; 
 
-      const isHari = dString === todayString;
+      const isHari = p.tanggal_masuk === todayString;
       const isBulan = (dMonth === currentMonth && dYear === currentYear);
       const isMinggu = (getWeekNumber(d) === currentWeekNumber && dYear === currentYear);
 
@@ -139,53 +163,67 @@ function AdminOverview() {
       }
     });
 
-    const dataMingguan = [
-      rawMingguan[1], rawMingguan[2], rawMingguan[3], rawMingguan[4], rawMingguan[5], rawMingguan[6], rawMingguan[0]
-    ];
-
+    const dataMingguan = [rawMingguan[1], rawMingguan[2], rawMingguan[3], rawMingguan[4], rawMingguan[5], rawMingguan[6], rawMingguan[0]];
     const dataTahunan = Object.keys(tahunanMap).sort().map(year => ({ name: year, kunjungan: tahunanMap[year] }));
     if (dataTahunan.length === 0) dataTahunan.push({ name: currentYear.toString(), kunjungan: 0 });
 
+    // Wadah Data Kamar
     const dataHunian = [
-      { name: 'Mgg 1', terisi: 0 }, { name: 'Mgg 2', terisi: 0 }, 
-      { name: 'Mgg 3', terisi: 0 }, { name: 'Mgg 4', terisi: 0 }
+      { name: 'Mgg 1', terisi: 0 }, { name: 'Mgg 2', terisi: 0 }, { name: 'Mgg 3', terisi: 0 }, { name: 'Mgg 4', terisi: 0 }
     ];
     rData.forEach(r => {
       if (!r.created_at) return;
       const d = new Date(r.created_at);
       if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
         const dateObj = d.getDate();
-        let w = 0;
-        if (dateObj <= 7) w = 0;
-        else if (dateObj <= 14) w = 1;
-        else if (dateObj <= 21) w = 2;
-        else w = 3;
+        let w = dateObj <= 7 ? 0 : dateObj <= 14 ? 1 : dateObj <= 21 ? 2 : 3;
         dataHunian[w].terisi += (r.occupied_beds || 0);
       }
     });
 
+    // Wadah Data Pendaftaran Operasi
+    const opRawMingguan = [
+      { name: 'Min', operasi: 0 }, { name: 'Sen', operasi: 0 }, { name: 'Sel', operasi: 0 },
+      { name: 'Rab', operasi: 0 }, { name: 'Kam', operasi: 0 }, { name: 'Jum', operasi: 0 }, { name: 'Sab', operasi: 0 }
+    ];
+    const opBulanan = [
+      { name: 'Jan', operasi: 0 }, { name: 'Feb', operasi: 0 }, { name: 'Mar', operasi: 0 },
+      { name: 'Apr', operasi: 0 }, { name: 'Mei', operasi: 0 }, { name: 'Jun', operasi: 0 },
+      { name: 'Jul', operasi: 0 }, { name: 'Ags', operasi: 0 }, { name: 'Sep', operasi: 0 },
+      { name: 'Okt', operasi: 0 }, { name: 'Nov', operasi: 0 }, { name: 'Des', operasi: 0 }
+    ];
+    const opTahunanMap: Record<string, number> = {};
+
+    sData.forEach(s => {
+      if (!s.created_at) return;
+      const d = new Date(s.created_at);
+      const dMonth = d.getMonth();
+      const dYear = d.getFullYear();
+
+      opRawMingguan[d.getDay()].operasi += 1;
+      if (dYear === currentYear) opBulanan[dMonth].operasi += 1;
+      opTahunanMap[dYear] = (opTahunanMap[dYear] || 0) + 1;
+    });
+
+    const opMingguan = [opRawMingguan[1], opRawMingguan[2], opRawMingguan[3], opRawMingguan[4], opRawMingguan[5], opRawMingguan[6], opRawMingguan[0]];
+    const opTahunan = Object.keys(opTahunanMap).sort().map(year => ({ name: year, operasi: opTahunanMap[year] }));
+    if (opTahunan.length === 0) opTahunan.push({ name: currentYear.toString(), operasi: 0 });
+
     return {
       dataMingguan, dataBulanan, dataTahunan, dataHunian,
+      opMingguan, opBulanan, opTahunan,
       bpjsTotal, nonBpjsTotal,
-      bpjsBreakdown: [
-        { name: 'Hari Ini', value: bpjsHari },
-        { name: 'Minggu Ini', value: bpjsMinggu },
-        { name: 'Bulan Ini', value: bpjsBulan }
-      ],
-      nonBpjsBreakdown: [
-        { name: 'Hari Ini', value: nonBpjsHari },
-        { name: 'Minggu Ini', value: nonBpjsMinggu },
-        { name: 'Bulan Ini', value: nonBpjsBulan }
-      ]
+      bpjsBreakdown: [{ name: 'Hari Ini', value: bpjsHari }, { name: 'Minggu Ini', value: bpjsMinggu }, { name: 'Bulan Ini', value: bpjsBulan }],
+      nonBpjsBreakdown: [{ name: 'Hari Ini', value: nonBpjsHari }, { name: 'Minggu Ini', value: nonBpjsMinggu }, { name: 'Bulan Ini', value: nonBpjsBulan }]
     };
   }, [chartDataQ.data]);
 
   const s = statsQ.data || { patients: 0, doctors: 0, rooms: 0, preOp: 0 };
   const activeDoctors = activeDoctorsQ.data || [];
+  const activeSchedules = schedulesTableQ.data || [];
   
-  const activeChartData = timeScale === 'mingguan' ? parsedData.dataMingguan : 
-                          timeScale === 'bulanan' ? parsedData.dataBulanan : 
-                          parsedData.dataTahunan;
+  const activeChartData = timeScale === 'mingguan' ? parsedData.dataMingguan : timeScale === 'bulanan' ? parsedData.dataBulanan : parsedData.dataTahunan;
+  const activeOpChartData = opTimeScale === 'mingguan' ? parsedData.opMingguan : opTimeScale === 'bulanan' ? parsedData.opBulanan : parsedData.opTahunan;
 
   const colorsBPJS = ['#1e3a8a', '#3b82f6', '#93c5fd'];
   const colorsNonBPJS = ['#9a3412', '#f97316', '#fdba74'];
@@ -201,26 +239,18 @@ function AdminOverview() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <MetricCard label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" />
           <MetricCard label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" />
-          
-          <DonutCardPremium 
-            title="BPJS" total={parsedData.bpjsTotal} 
-            data={parsedData.bpjsBreakdown} colors={colorsBPJS} 
-          />
-          <DonutCardPremium 
-            title="NON BPJS" total={parsedData.nonBpjsTotal} 
-            data={parsedData.nonBpjsBreakdown} colors={colorsNonBPJS} 
-          />
-
+          <DonutCardPremium title="BPJS" total={parsedData.bpjsTotal} data={parsedData.bpjsBreakdown} colors={colorsBPJS} />
+          <DonutCardPremium title="NON BPJS" total={parsedData.nonBpjsTotal} data={parsedData.nonBpjsBreakdown} colors={colorsNonBPJS} />
           <MetricCard label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" />
           <MetricCard label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" />
         </div>
 
         {/* ========================================== */}
-        {/* BAGIAN 2: GRAFIK PREMIUM & DOKTER AKTIF    */}
+        {/* BAGIAN 2: GRAFIK KUNJUNGAN & DOKTER AKTIF  */}
         {/* ========================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 space-y-6">
+            
             {/* Chart Kunjungan Pasien */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -231,7 +261,6 @@ function AdminOverview() {
                   <button onClick={() => setTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'tahunan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Tahunan</button>
                 </div>
               </div>
-
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={activeChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
@@ -243,11 +272,7 @@ function AdminOverview() {
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <Tooltip 
-                    cursor={{ fill: '#f8fafc' }} 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }}
-                    labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}
-                  />
+                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }} labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }} />
                   <Bar dataKey="kunjungan" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={timeScale === 'bulanan' ? 24 : 40} animationDuration={1000} />
                 </BarChart>
               </ResponsiveContainer>
@@ -256,7 +281,7 @@ function AdminOverview() {
             {/* Chart Tren Hunian Kamar */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h3 className="mb-6 font-bold text-gray-800 text-lg">Tren Hunian Kamar (Bulan Ini)</h3>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={parsedData.dataHunian} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorTerisi" x1="0" y1="0" x2="0" y2="1">
@@ -270,67 +295,145 @@ function AdminOverview() {
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }}
-                    labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="terisi" 
-                    stroke="#10b981" 
-                    strokeWidth={4} 
-                    fillOpacity={1} 
-                    fill="url(#colorTerisi)" 
-                    activeDot={{ r: 6, strokeWidth: 0, fill: '#059669' }}
-                    style={{ filter: 'url(#glow)' }}
-                  />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} labelStyle={{ fontWeight: 'bold', color: '#334155' }} />
+                  <Area type="monotone" dataKey="terisi" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorTerisi)" activeDot={{ r: 6, strokeWidth: 0, fill: '#059669' }} style={{ filter: 'url(#glow)' }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Kanan: Daftar Dokter Aktif (SUDAH DIPERBAIKI NAMA KOLOMNYA) */}
+          {/* Daftar Dokter Aktif */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg">Dokter Aktif</h3>
               <UserCheck size={20} className="text-emerald-500" />
             </div>
-
             <div className="flex-1 space-y-0 overflow-y-auto pr-2">
               {activeDoctors.length === 0 ? (
-                <div className="text-center text-sm text-gray-400 py-10">Tidak ada dokter yang berstatus aktif saat ini.</div>
+                <div className="text-center text-sm text-gray-400 py-10">Tidak ada dokter aktif.</div>
               ) : (
                 activeDoctors.map((doc, i) => {
                   const namaDokter = doc.full_name || "Nama Dokter";
-                  const cleanName = namaDokter.replace(/^(dr\.|drg\.)\s*/i, '');
-                  const initial = cleanName.charAt(0).toUpperCase();
-
+                  const initial = namaDokter.replace(/^(dr\.|drg\.)\s*/i, '').charAt(0).toUpperCase();
                   return (
                     <div key={i} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-sm shadow-sm border border-emerald-100">
-                          {initial}
-                        </div>
+                        <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-sm shadow-sm border border-emerald-100">{initial}</div>
                         <div>
                           <p className="text-sm font-bold text-gray-900">{namaDokter}</p>
-                          <p className="text-[11px] text-gray-500 font-medium">
-                            {doc.specialization || "Umum"}
-                          </p>
+                          <p className="text-[11px] text-gray-500 font-medium">{doc.specialization || "Umum"}</p>
                         </div>
                       </div>
-                      <div className="text-right flex flex-col items-end">
-                        <Badge variant="default" className="text-[10px] h-5 px-2 rounded bg-emerald-500 hover:bg-emerald-600 shadow-sm border-0">
-                          {doc.status}
-                        </Badge>
-                      </div>
+                      <Badge variant="default" className="text-[10px] h-5 px-2 rounded bg-emerald-500 hover:bg-emerald-600 shadow-sm border-0">{doc.status}</Badge>
                     </div>
                   );
                 })
               )}
             </div>
           </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* BAGIAN 3: TABEL JADWAL & CHART OPERASI     */}
+        {/* ========================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* KIRI: Tabel Jadwal Terdekat (Maksimal 5) */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-gray-800 text-lg">Jadwal Terdekat (Menunggu)</h3>
+              <CalendarClock size={20} className="text-blue-500" />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                  <tr>
+                    <th className="py-3 px-4 font-semibold rounded-tl-lg">Dokter</th>
+                    <th className="py-3 px-4 font-semibold">Pasien</th>
+                    <th className="py-3 px-4 font-semibold">Waktu</th>
+                    <th className="py-3 px-4 font-semibold rounded-tr-lg">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {activeSchedules.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-400">Tidak ada jadwal tertunda.</td>
+                    </tr>
+                  ) : (
+                    activeSchedules.map((sch, idx) => {
+                      const dName = sch.doctors?.full_name || "Dokter";
+                      const initial = dName.replace(/^(dr\.|drg\.)\s*/i, '').charAt(0).toUpperCase();
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">{initial}</div>
+                              <span className="font-semibold text-gray-900">{dName}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-600">{sch.patients?.nama || "Pasien"}</td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-gray-800">{sch.tanggal}</span>
+                              <span className="text-[10px] text-gray-500">{sch.jam}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-200 bg-orange-50">
+                              {sch.status || "Undone"}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* KANAN: Line Chart Pendaftaran Operasi */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+              <h3 className="font-bold text-gray-800 text-lg">Tren Pendaftaran Operasi</h3>
+              <div className="flex bg-slate-100 p-1 rounded-xl mt-3 sm:mt-0 shadow-inner">
+                <button onClick={() => setOpTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'mingguan' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>Mingguan</button>
+                <button onClick={() => setOpTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'bulanan' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>Bulanan</button>
+                <button onClick={() => setOpTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'tahunan' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>Tahunan</button>
+              </div>
+            </div>
+
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={activeOpChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <defs>
+                  <filter id="glowPurple" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#8b5cf6" floodOpacity="0.4"/>
+                  </filter>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                <Tooltip 
+                  cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="operasi" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={4} 
+                  dot={{ r: 4, fill: '#fff', stroke: '#8b5cf6', strokeWidth: 2 }} 
+                  activeDot={{ r: 7, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2 }}
+                  style={{ filter: 'url(#glowPurple)' }}
+                  animationDuration={1000}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
         </div>
+
       </div>
     </AdminDashboardShell>
   );
