@@ -24,7 +24,6 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Jika sudah login, langsung lempar ke /admin
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/admin" });
@@ -59,14 +58,28 @@ function AuthPage() {
   };
 
   return (
+    // PERBAIKAN: Menambahkan 'relative' dan 'overflow-hidden' pada pembungkus utama
     <div 
-      className="flex min-h-screen items-center justify-center p-4"
+      className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #f0f9ff 40%, #ffffff 100%)' }}
     >
-      <div className="w-full max-w-md">
+      
+      {/* ========================================== */}
+      {/* LAPISAN BACKGROUND KARAKTER CHOPPER */}
+      {/* ========================================== */}
+      <div className="absolute inset-0 z-0 flex items-end justify-center pointer-events-none opacity-15">
+        <img 
+          src="/chopper-bg.png" 
+          alt="Chopper Background" 
+          className="w-full max-w-2xl object-contain object-bottom" 
+          // Jika gambar kurang besar/pas, Anda bisa menyesuaikan class 'max-w-2xl' menjadi 'max-w-4xl' atau 'w-full h-full object-cover'
+        />
+      </div>
+
+      {/* PERBAIKAN: Menambahkan 'relative z-10' agar kotak form login berada di ATAS gambar background */}
+      <div className="relative z-10 w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-3 hover:opacity-90 transition-opacity">
           
-          {/* LOGO CHOPPER BARU */}
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-md bg-[#00a2ed]">
             <img src="/chopper-logo.jpg" alt="ChopperCare Logo" className="h-full w-full object-cover" />
           </div>
@@ -93,7 +106,7 @@ function AuthPage() {
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
                 placeholder="admin@choppercare.com" 
-                className="focus-visible:ring-[#00a2ed]"
+                className="focus-visible:ring-[#00a2ed] bg-white/70"
               />
             </div>
             <div className="space-y-1.5">
@@ -105,11 +118,10 @@ function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
                 placeholder="••••••••" 
-                className="focus-visible:ring-[#00a2ed]"
+                className="focus-visible:ring-[#00a2ed] bg-white/70"
               />
             </div>
             
-            {/* TOMBOL LOGIN BARU */}
             <Button 
               type="submit" 
               disabled={loading} 
@@ -125,7 +137,7 @@ function AuthPage() {
             <div className="h-px flex-1 bg-slate-200" /> or <div className="h-px flex-1 bg-slate-200" />
           </div>
           
-          <Button variant="outline" className="w-full h-11 font-semibold text-slate-600 border-slate-200 hover:bg-slate-50" onClick={handleGoogle} disabled={loading}>
+          <Button variant="outline" className="w-full h-11 font-semibold text-slate-600 border-slate-200 hover:bg-slate-50 bg-white/70" onClick={handleGoogle} disabled={loading}>
             Continue with Google
           </Button>
         </div>
