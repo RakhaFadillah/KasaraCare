@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./admin-sidebar";
-import { useAuth } from "@/hooks/use-auth";
 import { Sun, Moon } from "lucide-react";
 
 interface AdminDashboardShellProps {
@@ -18,7 +17,6 @@ export function AdminDashboardShell({
   description,
   actions,
 }: AdminDashboardShellProps) {
-  const { user } = useAuth();
   
   // ==========================================
   // 1. LOGIKA PENYIMPANAN DARK MODE
@@ -41,7 +39,7 @@ export function AdminDashboardShell({
   }, [isDarkMode]);
 
   // ==========================================
-  // 2. PERBAIKAN: LOGIKA SIDEBAR TERKONTROL PENUH
+  // 2. LOGIKA SIDEBAR TERKONTROL PENUH
   // ==========================================
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== "undefined") {
@@ -54,6 +52,34 @@ export function AdminDashboardShell({
     setIsSidebarOpen(open);
     localStorage.setItem("medicare-sidebar-state", String(open));
   };
+
+  // ==========================================
+  // 3. LOGIKA JAM & TANGGAL REAL-TIME (ZONA BATAM / WIB)
+  // ==========================================
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format Tanggal (Contoh: Selasa, 21 Juli 2026)
+  const formattedDate = time.toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  // Format Jam (Contoh: 14:30:45 WIB)
+  const formattedTime = time.toLocaleTimeString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).replace(/\./g, ':') + ' WIB';
 
   return (
     <SidebarProvider 
@@ -80,12 +106,15 @@ export function AdminDashboardShell({
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
 
+              {/* ========================================== */}
+              {/* HANYA BAGIAN INI YANG DIGANTI SESUAI PERMINTAAN */}
+              {/* ========================================== */}
               <div className="text-right">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 transition-colors">
-                  {user?.email ?? "Administrator"}
+                  {formattedDate}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
-                  Administrator Sistem
+                <p className="text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors tabular-nums">
+                  {formattedTime}
                 </p>
               </div>
             </div>
