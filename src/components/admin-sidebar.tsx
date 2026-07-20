@@ -8,7 +8,6 @@ import {
   CalendarClock,
   ClipboardPlus,
   LogOut,
-  HeartPulse,
   BedDouble,
   Syringe,
   Layers,
@@ -64,7 +63,6 @@ const menuGroups = [
 ];
 
 export default function AdminSidebar() {
-  // PERBAIKAN: Hapus fungsi setOpen dan useEffect yang bikin macet!
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user } = useAuth(); 
@@ -93,12 +91,17 @@ export default function AdminSidebar() {
       
       <SidebarHeader className="border-b border-transparent pt-4 pb-2">
         <div className="flex items-center gap-3 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
-            <HeartPulse className="h-5 w-5" />
+          
+          {/* ========================================== */}
+          {/* LOGO CHOPPER BARU */}
+          {/* ========================================== */}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-lg shadow-blue-600/20 bg-blue-500">
+            <img src="/chopper-logo.jpg" alt="ChopperCare Logo" className="h-full w-full object-cover" />
           </div>
+
           <div className="flex flex-col truncate group-data-[collapsible=icon]:hidden">
             <h2 className="font-display text-lg font-black tracking-tight text-slate-900 dark:text-white transition-colors">
-              MediCare
+              ChopperCare
             </h2>
           </div>
         </div>
@@ -160,7 +163,7 @@ export default function AdminSidebar() {
                 Administrator
               </span>
               <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate transition-colors">
-                {user?.email || "admin@medicare.com"}
+                {user?.email || "admin@choppercare.com"}
               </span>
             </div>
           </div>
