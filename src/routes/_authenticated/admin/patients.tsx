@@ -4,17 +4,31 @@ import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { Badge } from "@/components/ui/badge";
 
+// 1. Menambahkan "validateSearch" agar halaman ini siap menerima parameter URL '?filter=...'
 export const Route = createFileRoute("/_authenticated/admin/patients")({
   head: () => ({ meta: [{ title: "Pasien — Admin" }] }),
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      filter: search.filter as string | undefined,
+    };
+  },
   component: PatientsAdmin,
 });
 
 function PatientsAdmin() {
+  // 2. Menangkap isi filter (misal: "BPJS" atau "Non BPJS") dari URL Dashboard
+  const { filter } = Route.useSearch();
+
   return (
     <AdminDashboardShell title="Manajemen Pasien" description="Kelola data pendaftaran pasien, layanan medis, dan status rawat inap.">
       <CrudTable<any>
         table="patients"
-        title="Pasien"
+        title={filter ? `Data Pasien: ${filter}` : "Semua Pasien"}
+        
+        // 3. Mengirimkan filter bawaan ke tabel pencarian Anda
+        // CATATAN: Pastikan komponen CrudTable Anda mendukung props ini (seperti defaultSearch, initialSearch, atau globalFilter)
+        defaultSearch={filter || ""} 
+        
         searchKeys={["nama", "nomor_hp", "golongan", "kamar"]}
         columns={[
           { key: "nama", label: "Nama Pasien" },
