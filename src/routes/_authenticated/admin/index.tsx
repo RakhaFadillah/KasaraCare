@@ -24,7 +24,7 @@ function AdminOverview() {
   const [opTimeScale, setOpTimeScale] = useState('bulanan');
 
   // ==========================================
-  // FUNGSI PINDAH HALAMAN (KEMBALI KE BAHASA INGGRIS SESUAI NAMA FILE)
+  // FUNGSI PINDAH HALAMAN
   // ==========================================
   const handleNavigate = (path: string, filterValue?: string) => {
     if (filterValue) {
@@ -232,7 +232,7 @@ function AdminOverview() {
           />
           <MetricCard 
             label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" 
-            onClick={() => handleNavigate('/admin/surgeries')}
+            onClick={() => handleNavigate('/admin/registrations')}
           />
           <DonutCardPremium 
             title="BPJS" total={parsedData.bpjsTotal} data={parsedData.bpjsBreakdown} colors={colorsBPJS} 
