@@ -57,16 +57,20 @@ function AdminOverview() {
     }
   });
 
-  // 3. QUERY DOKTER AKTIF (Menggantikan Jadwal Terdekat)
+  // 3. QUERY DOKTER AKTIF (SUDAH DIPERBAIKI SESUAI DATABASE)
   const activeDoctorsQ = useQuery({
     queryKey: ["active-doctors"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("doctors")
-        .select("*")
-        .eq("status", "Active") // Hanya ambil yang statusnya Active
-        .order("full_name", { ascending: true }) // Urutkan berdasarkan nama
-        .limit(8); // Batasi jumlah yang tampil agar tidak terlalu panjang ke bawah
+        .select("full_name, specialization, status")
+        .ilike("status", "Available") // Diubah dari Active menjadi Available
+        .limit(8); 
+      
+      if (error) {
+        console.error("Gagal mengambil data dokter:", error.message);
+        return [];
+      }
       return data || [];
     }
   });
@@ -285,7 +289,7 @@ function AdminOverview() {
             </div>
           </div>
 
-          {/* Kanan: Daftar Dokter Aktif */}
+          {/* Kanan: Daftar Dokter Aktif (SUDAH DIPERBAIKI NAMA KOLOMNYA) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg">Dokter Aktif</h3>
@@ -297,8 +301,8 @@ function AdminOverview() {
                 <div className="text-center text-sm text-gray-400 py-10">Tidak ada dokter yang berstatus aktif saat ini.</div>
               ) : (
                 activeDoctors.map((doc, i) => {
-                  // Fungsi cerdas untuk menghapus kata "dr." atau "drg." dari awal nama untuk mengambil inisial asli
-                  const cleanName = (doc.full_name || "Dokter").replace(/^(dr\.|drg\.)\s*/i, '');
+                  const namaDokter = doc.full_name || "Nama Dokter";
+                  const cleanName = namaDokter.replace(/^(dr\.|drg\.)\s*/i, '');
                   const initial = cleanName.charAt(0).toUpperCase();
 
                   return (
@@ -308,9 +312,9 @@ function AdminOverview() {
                           {initial}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-900">{doc.full_name || "Nama Dokter"}</p>
+                          <p className="text-sm font-bold text-gray-900">{namaDokter}</p>
                           <p className="text-[11px] text-gray-500 font-medium">
-                            {doc.spesialisasi || "Umum"} • {doc.poli || "Poli Umum"}
+                            {doc.specialization || "Umum"}
                           </p>
                         </div>
                       </div>
