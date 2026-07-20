@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, 
-  AreaChart, Area, XAxis, Tooltip, CartesianGrid, Cell
+  AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Cell
 } from "recharts";
 import type { ReactNode } from "react";
 
@@ -73,7 +73,6 @@ function AdminOverview() {
   const schedulesQ = useQuery({
     queryKey: ["upcoming-schedules"],
     queryFn: async () => {
-      // Mengambil jadwal hari ini ke depan, diurutkan paling dekat
       const today = new Date().toISOString().split('T')[0];
       const { data } = await supabase
         .from("schedules")
@@ -88,8 +87,6 @@ function AdminOverview() {
 
   const s = statsQ.data || { patients: 0, doctors: 0, rooms: 0, preOp: 0, bpjs: 0, nonBpjs: 0 };
   const schedules = schedulesQ.data || [];
-
-  // Menentukan data grafik yang aktif berdasarkan tombol yang diklik
   const activeChartData = timeScale === 'mingguan' ? dataMingguan : timeScale === 'bulanan' ? dataBulanan : dataTahunan;
 
   return (
@@ -102,69 +99,88 @@ function AdminOverview() {
         {/* BAGIAN 1: 6 KOTAK METRIK (Sesuai Savour Snap) */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          
-          {/* Kiri: 4 Kotak Kecil */}
           <div className="lg:col-span-2 grid grid-cols-2 gap-4">
             <MetricCard label="Total Pasien" value={s.patients} icon={<Users size={22} />} color="blue" />
             <MetricCard label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={22} />} color="orange" />
             <MetricCard label="Total Dokter" value={s.doctors} icon={<Stethoscope size={22} />} color="emerald" />
             <MetricCard label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={22} />} color="indigo" />
           </div>
-
-          {/* Kanan: 2 Donut Chart (BPJS & Non BPJS) */}
           <div className="grid grid-cols-2 gap-4">
             <DonutCard title="BPJS" value={s.bpjs} total={s.patients} color="#3b82f6" />
             <DonutCard title="Non BPJS" value={s.nonBpjs} total={s.patients} color="#f59e0b" />
           </div>
-
         </div>
 
         {/* ========================================== */}
-        {/* BAGIAN 2: GRAFIK & JADWAL BAWAH            */}
+        {/* BAGIAN 2: GRAFIK PREMIUM & JADWAL BAWAH    */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Kiri: 2 Grafik Besar */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Chart Kunjungan Pasien dengan Toggle */}
+            {/* Chart Kunjungan Pasien (PREMIUM UPGRADE) */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-                <h3 className="font-bold text-gray-800">Dinamika Kunjungan Pasien</h3>
-                
-                {/* Tombol Toggle Skala Waktu */}
-                <div className="flex bg-gray-100 p-1 rounded-lg mt-3 sm:mt-0">
-                  <button onClick={() => setTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${timeScale === 'mingguan' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Mingguan</button>
-                  <button onClick={() => setTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${timeScale === 'bulanan' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Bulanan</button>
-                  <button onClick={() => setTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${timeScale === 'tahunan' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Tahunan</button>
+                <h3 className="font-bold text-gray-800 text-lg">Dinamika Kunjungan Pasien</h3>
+                <div className="flex bg-slate-100 p-1 rounded-xl mt-3 sm:mt-0 shadow-inner">
+                  <button onClick={() => setTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'mingguan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Mingguan</button>
+                  <button onClick={() => setTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'bulanan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Bulanan</button>
+                  <button onClick={() => setTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'tahunan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Tahunan</button>
                 </div>
               </div>
 
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={activeChartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} />
-                  <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Bar dataKey="kunjungan" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={timeScale === 'bulanan' ? 20 : 40} />
+                <BarChart data={activeChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+                      <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }} 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }}
+                    labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}
+                  />
+                  <Bar dataKey="kunjungan" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={timeScale === 'bulanan' ? 24 : 40} animationDuration={1000} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Chart Tren Hunian Kamar (Saran dari saya) */}
+            {/* Chart Tren Hunian Kamar (PREMIUM UPGRADE) */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="mb-6 font-bold text-gray-800">Tren Hunian Kamar (Bulan Ini)</h3>
+              <h3 className="mb-6 font-bold text-gray-800 text-lg">Tren Hunian Kamar (Bulan Ini)</h3>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={dataHunian}>
+                <AreaChart data={dataHunian} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorTerisi" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
                     </linearGradient>
+                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10b981" floodOpacity="0.3"/>
+                    </filter>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Area type="monotone" dataKey="terisi" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorTerisi)" />
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }}
+                    labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="terisi" 
+                    stroke="#10b981" 
+                    strokeWidth={4} 
+                    fillOpacity={1} 
+                    fill="url(#colorTerisi)" 
+                    activeDot={{ r: 6, strokeWidth: 0, fill: '#059669' }}
+                    style={{ filter: 'url(#glow)' }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -174,8 +190,8 @@ function AdminOverview() {
           {/* Kanan: Jadwal Dokter Terdekat */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800">Jadwal Terdekat</h3>
-              <CalendarClock size={18} className="text-gray-400" />
+              <h3 className="font-bold text-gray-800 text-lg">Jadwal Terdekat</h3>
+              <CalendarClock size={20} className="text-blue-500" />
             </div>
 
             <div className="flex-1 space-y-0 overflow-y-auto pr-2">
@@ -183,10 +199,9 @@ function AdminOverview() {
                 <div className="text-center text-sm text-gray-400 py-10">Tidak ada jadwal mendatang.</div>
               ) : (
                 schedules.map((sch, i) => (
-                  <div key={i} className="flex justify-between items-center py-4 border-b border-gray-100 last:border-0">
+                  <div key={i} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
                     <div className="flex items-center gap-3">
-                      {/* Avatar Inisial Dokter */}
-                      <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-xs">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm shadow-sm border border-blue-100">
                         {sch.doctors?.full_name?.charAt(0) || "D"}
                       </div>
                       <div>
@@ -195,8 +210,8 @@ function AdminOverview() {
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end">
-                      <p className="text-xs font-bold text-gray-700">{sch.tanggal}</p>
-                      <p className="text-[11px] text-gray-400 mb-1">{sch.jam}</p>
+                      <p className="text-xs font-bold text-slate-700">{sch.tanggal}</p>
+                      <p className="text-[11px] text-slate-400 mb-1">{sch.jam}</p>
                       <Badge variant={sch.status === "Done" ? "default" : "outline"} className="text-[9px] h-4 px-1.5 rounded-sm">
                         {sch.status}
                       </Badge>
@@ -226,20 +241,19 @@ function MetricCard({ label, value, icon, color }: any) {
   };
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow group">
+    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 group">
       <div className="flex justify-between items-start mb-4">
         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{label}</p>
-        <div className={`p-2 rounded-lg ${colorMap[color]} group-hover:scale-110 transition-transform`}>
+        <div className={`p-2 rounded-lg ${colorMap[color]} group-hover:scale-110 transition-transform duration-300`}>
           {icon}
         </div>
       </div>
-      <h3 className="text-3xl font-black text-gray-900">{value}</h3>
+      <h3 className="text-3xl font-black text-gray-900 tracking-tight">{value}</h3>
     </div>
   );
 }
 
 function DonutCard({ title, value, total, color }: any) {
-  // Mencegah error jika total pasien = 0
   const safeTotal = total > 0 ? total : 1;
   const remainder = safeTotal - value;
   
@@ -249,18 +263,17 @@ function DonutCard({ title, value, total, color }: any) {
   ];
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between items-center hover:shadow-md transition-shadow text-center">
+    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between items-center hover:shadow-md transition-all duration-300 text-center">
       <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2 w-full text-left">{title}</p>
       <div className="relative w-28 h-28 flex justify-center items-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={pieData} cx="50%" cy="50%" innerRadius={35} outerRadius={50} dataKey="value" stroke="none">
               <Cell fill={color} />
-              <Cell fill="#f1f5f9" /> {/* Warna abu-abu pudar untuk bagian kosong */}
+              <Cell fill="#f1f5f9" /> 
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        {/* Angka di Tengah Donut */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xl font-black text-gray-900 leading-none">{value}</span>
         </div>
