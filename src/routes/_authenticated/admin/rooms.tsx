@@ -77,18 +77,19 @@ function ManajemenKamar() {
   const terisi = rooms.reduce((acc, room) => acc + (room.occupied_beds || 0), 0);
   const perbaikan = rooms.filter(r => r.status === "Perbaikan").length;
 
-  if (isLoading) return <div className="p-8 text-center text-gray-500">Memuat data kamar...</div>;
+  if (isLoading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Memuat data kamar...</div>;
 
   return (
     <AdminDashboardShell title="Manajemen Kamar" description="Kelola data ruangan, kapasitas, dan jumlah kasur terisi.">
       
-      <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
+      {/* PERBAIKAN: Menghapus wrapper bg-slate-50 min-h-screen agar menyatu dengan shell utama */}
+      <div className="w-full text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300 pb-8">
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <SummaryCard title="Total Kamar" value={totalKamar} valueColor="text-blue-600" />
-          <SummaryCard title="Total Isi Kasur" value={totalKasur} valueColor="text-gray-800" />
-          <SummaryCard title="Terisi" value={terisi} valueColor="text-yellow-600" />
-          <SummaryCard title="Perbaikan" value={perbaikan} valueColor="text-red-600" />
+          <SummaryCard title="Total Kamar" value={totalKamar} valueColor="text-blue-600 dark:text-blue-400" />
+          <SummaryCard title="Total Isi Kasur" value={totalKasur} valueColor="text-slate-800 dark:text-white" />
+          <SummaryCard title="Terisi" value={terisi} valueColor="text-yellow-600 dark:text-yellow-400" />
+          <SummaryCard title="Perbaikan" value={perbaikan} valueColor="text-red-600 dark:text-red-400" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -105,38 +106,38 @@ function ManajemenKamar() {
               <div 
                 key={room.id} 
                 onClick={() => setSelectedRoom(room)}
-                className="bg-white border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer rounded-2xl p-5 flex flex-col justify-between shadow-sm"
+                className="bg-white dark:bg-[#1a1d27] border border-gray-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 transition-all cursor-pointer rounded-2xl p-5 flex flex-col justify-between shadow-sm active:scale-[0.98]"
               >
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h3 className="text-gray-900 font-bold text-xl">{room.room_number}</h3>
-                    <p className="text-gray-500 text-sm font-medium">{room.room_type}</p>
+                    <h3 className="text-gray-900 dark:text-white font-bold text-xl">{room.room_number}</h3>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm font-medium">{room.room_type}</p>
                   </div>
-                  <div className="bg-blue-50 p-2 rounded-xl">
-                    <BedDouble size={22} className="text-blue-600" />
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl">
+                    <BedDouble size={22} className="text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center mb-6 space-x-2">
-                  <div className="bg-green-50 border border-green-100 rounded-xl px-2 py-3 flex-1 text-center">
-                    <p className="text-green-700 text-[11px] font-semibold mb-1">Tersedia</p>
-                    <p className="text-green-700 font-bold text-xl">{available < 0 ? 0 : available}</p>
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50 rounded-xl px-2 py-3 flex-1 text-center">
+                    <p className="text-green-700 dark:text-green-400 text-[11px] font-semibold mb-1">Tersedia</p>
+                    <p className="text-green-700 dark:text-green-400 font-bold text-xl">{available < 0 ? 0 : available}</p>
                   </div>
-                  <div className="bg-yellow-50 border border-yellow-100 rounded-xl px-2 py-3 flex-1 text-center">
-                    <p className="text-yellow-700 text-[11px] font-semibold mb-1">Terisi</p>
-                    <p className="text-yellow-700 font-bold text-xl">{occupied}</p>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800/50 rounded-xl px-2 py-3 flex-1 text-center">
+                    <p className="text-yellow-700 dark:text-yellow-400 text-[11px] font-semibold mb-1">Terisi</p>
+                    <p className="text-yellow-700 dark:text-yellow-400 font-bold text-xl">{occupied}</p>
                   </div>
-                  <div className="bg-red-50 border border-red-100 rounded-xl px-2 py-3 flex-1 text-center">
-                    <p className="text-red-700 text-[11px] font-semibold mb-1">Perbaikan</p>
-                    <p className="text-red-700 font-bold text-xl">{maintenance}</p>
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-xl px-2 py-3 flex-1 text-center">
+                    <p className="text-red-700 dark:text-red-400 text-[11px] font-semibold mb-1">Perbaikan</p>
+                    <p className="text-red-700 dark:text-red-400 font-bold text-xl">{maintenance}</p>
                   </div>
                 </div>
 
                 <div>
-                  <div className="w-full bg-gray-100 rounded-full h-2 mb-2 overflow-hidden">
+                  <div className="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-2 mb-2 overflow-hidden">
                     <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${room.status === "Perbaikan" ? 100 : occupancyRate}%` }}></div>
                   </div>
-                  <p className="text-center text-[11px] font-medium text-gray-500">
+                  <p className="text-center text-[11px] font-medium text-gray-500 dark:text-slate-400">
                     {occupied} dari {capacity} kasur terisi
                   </p>
                 </div>
@@ -147,71 +148,72 @@ function ManajemenKamar() {
 
       </div>
 
+      {/* POP-UP / MODAL MENDUKUNG DARK MODE */}
       {selectedRoom && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1a1d27] border dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col transition-colors duration-300">
             
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-800 sticky top-0 bg-white dark:bg-[#1a1d27] z-10 transition-colors duration-300">
               <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded-lg text-blue-700"><Home size={24} /></div>
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg text-blue-700 dark:text-blue-400"><Home size={24} /></div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Kamar {selectedRoom.room_number}</h2>
-                  <p className="text-sm text-gray-500">Pengaturan Data & Daftar Pasien</p>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Kamar {selectedRoom.room_number}</h2>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Pengaturan Data & Daftar Pasien</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedRoom(null)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition">
+              <button onClick={() => setSelectedRoom(null)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-full transition">
                 <X size={24} />
               </button>
             </div>
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <Wrench size={18} className="text-blue-500" /> Form Pengaturan
+                <h3 className="font-bold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+                  <Wrench size={18} className="text-blue-500 dark:text-blue-400" /> Form Pengaturan
                 </h3>
                 <form onSubmit={handleSaveRoom} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kelas Kamar</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Kelas Kamar</label>
                     <select 
                       value={formData.room_type || ""}
                       onChange={(e) => setFormData({...formData, room_type: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-transparent border border-gray-300 dark:border-slate-700 dark:text-white rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                     >
-                      <option value="Kelas 1">Kelas 1</option>
-                      <option value="Kelas 2">Kelas 2</option>
-                      <option value="Kelas 3">Kelas 3</option>
-                      <option value="VIP">VIP</option>
+                      <option value="Kelas 1" className="dark:bg-[#1a1d27]">Kelas 1</option>
+                      <option value="Kelas 2" className="dark:bg-[#1a1d27]">Kelas 2</option>
+                      <option value="Kelas 3" className="dark:bg-[#1a1d27]">Kelas 3</option>
+                      <option value="VIP" className="dark:bg-[#1a1d27]">VIP</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Kasur (Kapasitas)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Total Kasur (Kapasitas)</label>
                     <input 
                       type="number" min="1"
                       value={formData.capacity || 0}
                       onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-transparent border border-gray-300 dark:border-slate-700 dark:text-white rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kasur Terisi</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Kasur Terisi</label>
                     <input 
                       type="number" min="0" max={formData.capacity}
                       value={formData.occupied_beds || 0}
                       onChange={(e) => setFormData({...formData, occupied_beds: parseInt(e.target.value)})}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-transparent border border-gray-300 dark:border-slate-700 dark:text-white rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status Kamar</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Status Kamar</label>
                     <select 
                       value={formData.status || ""}
                       onChange={(e) => setFormData({...formData, status: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full bg-transparent border border-gray-300 dark:border-slate-700 dark:text-white rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                     >
-                      <option value="Kosong">Kosong</option>
-                      <option value="Terisi Sebagian">Terisi Sebagian</option>
-                      <option value="Penuh">Penuh</option>
-                      <option value="Perbaikan">Perbaikan</option>
+                      <option value="Kosong" className="dark:bg-[#1a1d27]">Kosong</option>
+                      <option value="Terisi Sebagian" className="dark:bg-[#1a1d27]">Terisi Sebagian</option>
+                      <option value="Penuh" className="dark:bg-[#1a1d27]">Penuh</option>
+                      <option value="Perbaikan" className="dark:bg-[#1a1d27]">Perbaikan</option>
                     </select>
                   </div>
                   <button 
@@ -223,28 +225,28 @@ function ManajemenKamar() {
                 </form>
               </div>
 
-              <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <Users size={18} className="text-green-600" /> Pasien Saat Ini
+              <div className="bg-gray-50 dark:bg-slate-800/30 p-5 rounded-xl border border-gray-200 dark:border-slate-800 transition-colors duration-300">
+                <h3 className="font-bold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+                  <Users size={18} className="text-green-600 dark:text-green-400" /> Pasien Saat Ini
                 </h3>
                 
                 {roomPatients.length === 0 ? (
-                  <div className="text-center py-10 text-gray-400">
+                  <div className="text-center py-10 text-gray-400 dark:text-slate-500">
                     <BedDouble size={48} className="mx-auto mb-3 opacity-20" />
                     <p>Tidak ada pasien di kamar ini.</p>
                   </div>
                 ) : (
                   <ul className="space-y-3">
                     {roomPatients.map((patient, idx) => (
-                      <li key={idx} className="bg-white border border-gray-200 p-3 rounded-lg shadow-sm flex flex-col">
-                        <span className="font-bold text-gray-900">{patient.nama}</span>
-                        <span className="text-xs text-gray-500">{patient.poli || "Rawat Inap"}</span>
+                      <li key={idx} className="bg-white dark:bg-[#1a1d27] border border-gray-200 dark:border-slate-700 p-3 rounded-lg shadow-sm flex flex-col transition-colors duration-300">
+                        <span className="font-bold text-gray-900 dark:text-white">{patient.nama}</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-400">{patient.poli || "Rawat Inap"}</span>
                       </li>
                     ))}
                   </ul>
                 )}
                 
-                <div className="mt-4 text-xs text-gray-400 text-center border-t border-gray-200 pt-4">
+                <div className="mt-4 text-xs text-gray-400 dark:text-slate-500 text-center border-t border-gray-200 dark:border-slate-800 pt-4">
                   Jumlah kasur terisi di form harus sesuai dengan jumlah fisik pasien yang ada di ruangan.
                 </div>
               </div>
@@ -260,8 +262,8 @@ function ManajemenKamar() {
 
 function SummaryCard({ title, value, valueColor }: { title: string, value: number | string, valueColor: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-center shadow-sm hover:shadow-md transition">
-      <span className="text-sm text-gray-500 font-semibold mb-1">{title}</span>
+    <div className="bg-white dark:bg-[#1a1d27] border border-gray-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-center shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-blue-500/10 transition-all duration-300">
+      <span className="text-sm text-gray-500 dark:text-slate-400 font-semibold mb-1">{title}</span>
       <span className={`text-3xl font-black ${valueColor}`}>{value}</span>
     </div>
   );

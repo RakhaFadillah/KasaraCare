@@ -34,7 +34,6 @@ function AdminOverview() {
     }
   };
 
-  // 1. QUERY STATISTIK METRIK KOTAK ATAS
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
@@ -54,7 +53,6 @@ function AdminOverview() {
     },
   });
 
-  // 2. QUERY DATA GRAFIK
   const chartDataQ = useQuery({
     queryKey: ["chart-real-data"],
     queryFn: async () => {
@@ -71,7 +69,6 @@ function AdminOverview() {
     }
   });
 
-  // 3. QUERY DOKTER AKTIF
   const activeDoctorsQ = useQuery({
     queryKey: ["active-doctors"],
     queryFn: async () => {
@@ -89,7 +86,6 @@ function AdminOverview() {
     }
   });
 
-  // 4. QUERY TABEL JADWAL TERDEKAT 
   const schedulesTableQ = useQuery({
     queryKey: ["upcoming-schedules-table"],
     queryFn: async () => {
@@ -108,9 +104,6 @@ function AdminOverview() {
     }
   });
 
-  // ==========================================
-  // LOGIKA PERHITUNGAN DATA OTOMATIS
-  // ==========================================
   const parsedData = useMemo(() => {
     const pData = chartDataQ.data?.patients || [];
     const rData = chartDataQ.data?.rooms || [];
@@ -218,9 +211,11 @@ function AdminOverview() {
   const colorsNonBPJS = ['#9a3412', '#f97316', '#fdba74'];
 
   return (
-    <AdminDashboardShell title="Analytics" description="Monitor performa dan aktivitas rumah sakit.">
+    // PERBAIKAN: Ubah judul dari "Analytics" menjadi "Dashboard"
+    <AdminDashboardShell title="Dashboard" description="Monitor performa dan aktivitas rumah sakit.">
       
-      <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
+      {/* PERBAIKAN: Menghapus wrapper bg-slate-50 min-h-screen agar menyatu mulus dengan layout shell */}
+      <div className="w-full text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300">
         
         {/* ========================================== */}
         {/* BAGIAN 1: GRID METRIK 6 KOTAK (INTERAKTIF) */}
@@ -258,13 +253,13 @@ function AdminOverview() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 space-y-6">
             
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
+            <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-                <h3 className="font-bold text-gray-800 text-lg">Dinamika Kunjungan Pasien</h3>
-                <div className="flex bg-slate-100 p-1 rounded-xl mt-3 sm:mt-0 shadow-inner">
-                  <button onClick={() => setTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'mingguan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Mingguan</button>
-                  <button onClick={() => setTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'bulanan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Bulanan</button>
-                  <button onClick={() => setTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'tahunan' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>Tahunan</button>
+                <h3 className="font-bold text-gray-800 dark:text-white text-lg">Dinamika Kunjungan Pasien</h3>
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mt-3 sm:mt-0 shadow-inner">
+                  <button onClick={() => setTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'mingguan' ? 'bg-white dark:bg-[#252b3b] shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>Mingguan</button>
+                  <button onClick={() => setTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'bulanan' ? 'bg-white dark:bg-[#252b3b] shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>Bulanan</button>
+                  <button onClick={() => setTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${timeScale === 'tahunan' ? 'bg-white dark:bg-[#252b3b] shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>Tahunan</button>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={260}>
@@ -275,17 +270,17 @@ function AdminOverview() {
                       <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" opacity={0.1} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }} labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }} />
+                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: '#1e293b', color: '#fff', padding: '10px 14px' }} labelStyle={{ fontWeight: 'bold', color: '#cbd5e1', marginBottom: '4px' }} />
                   <Bar dataKey="kunjungan" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={timeScale === 'bulanan' ? 24 : 40} animationDuration={1000} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
-              <h3 className="mb-6 font-bold text-gray-800 text-lg">Tren Hunian Kamar (Bulan Ini)</h3>
+            <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
+              <h3 className="mb-6 font-bold text-gray-800 dark:text-white text-lg">Tren Hunian Kamar (Bulan Ini)</h3>
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={parsedData.dataHunian} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
@@ -297,7 +292,7 @@ function AdminOverview() {
                       <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10b981" floodOpacity="0.3"/>
                     </filter>
                   </defs>
-                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" opacity={0.1} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} labelStyle={{ fontWeight: 'bold', color: '#334155' }} />
@@ -307,9 +302,9 @@ function AdminOverview() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
+          <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 h-full flex flex-col hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg">Dokter Aktif</h3>
+              <h3 className="font-bold text-gray-800 dark:text-white text-lg">Dokter Aktif</h3>
               <UserCheck size={20} className="text-emerald-500" />
             </div>
             <div className="flex-1 space-y-0 overflow-y-auto pr-2">
@@ -320,12 +315,12 @@ function AdminOverview() {
                   const namaDokter = doc.full_name || "Nama Dokter";
                   const initial = namaDokter.replace(/^(dr\.|drg\.)\s*/i, '').charAt(0).toUpperCase();
                   return (
-                    <div key={i} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
+                    <div key={i} className="flex justify-between items-center py-4 border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg px-2 -mx-2">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-sm shadow-sm border border-emerald-100">{initial}</div>
+                        <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-sm shadow-sm border border-emerald-100 dark:border-emerald-800/50">{initial}</div>
                         <div>
-                          <p className="text-sm font-bold text-gray-900">{namaDokter}</p>
-                          <p className="text-[11px] text-gray-500 font-medium">{doc.specialization || "Umum"}</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-slate-200">{namaDokter}</p>
+                          <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium">{doc.specialization || "Umum"}</p>
                         </div>
                       </div>
                       <Badge variant="default" className="text-[10px] h-5 px-2 rounded bg-emerald-500 hover:bg-emerald-600 shadow-sm border-0">{doc.status}</Badge>
@@ -342,14 +337,14 @@ function AdminOverview() {
         {/* ========================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
+          <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg">Jadwal Terdekat (Menunggu)</h3>
+              <h3 className="font-bold text-gray-800 dark:text-white text-lg">Jadwal Terdekat (Menunggu)</h3>
               <CalendarClock size={20} className="text-blue-500" />
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
                   <tr>
                     <th className="py-3 px-4 font-semibold rounded-tl-lg">Dokter</th>
                     <th className="py-3 px-4 font-semibold">Pasien</th>
@@ -357,7 +352,7 @@ function AdminOverview() {
                     <th className="py-3 px-4 font-semibold rounded-tr-lg">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                   {activeSchedules.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-gray-400">Tidak ada jadwal tertunda.</td>
@@ -367,22 +362,22 @@ function AdminOverview() {
                       const dName = sch.doctors?.full_name || "Dokter";
                       const initial = dName.replace(/^(dr\.|drg\.)\s*/i, '').charAt(0).toUpperCase();
                       return (
-                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">{initial}</div>
-                              <span className="font-semibold text-gray-900">{dName}</span>
+                              <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">{initial}</div>
+                              <span className="font-semibold text-gray-900 dark:text-slate-200">{dName}</span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-gray-600">{sch.patients?.nama || "Pasien"}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-slate-400">{sch.patients?.nama || "Pasien"}</td>
                           <td className="py-3 px-4">
                             <div className="flex flex-col">
-                              <span className="font-semibold text-gray-800">{sch.tanggal}</span>
-                              <span className="text-[10px] text-gray-500">{sch.jam}</span>
+                              <span className="font-semibold text-gray-800 dark:text-slate-300">{sch.tanggal}</span>
+                              <span className="text-[10px] text-gray-500 dark:text-slate-500">{sch.jam}</span>
                             </div>
                           </td>
                           <td className="py-3 px-4">
-                            <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-200 bg-orange-50">
+                            <Badge variant="outline" className="text-[10px] text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/20">
                               {sch.status || "Undone"}
                             </Badge>
                           </td>
@@ -395,13 +390,13 @@ function AdminOverview() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
+          <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg">Tren Pendaftaran Operasi</h3>
-              <div className="flex bg-slate-100 p-1 rounded-xl mt-3 sm:mt-0 shadow-inner">
-                <button onClick={() => setOpTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'mingguan' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>Mingguan</button>
-                <button onClick={() => setOpTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'bulanan' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>Bulanan</button>
-                <button onClick={() => setOpTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'tahunan' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>Tahunan</button>
+              <h3 className="font-bold text-gray-800 dark:text-white text-lg">Tren Pendaftaran Operasi</h3>
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mt-3 sm:mt-0 shadow-inner">
+                <button onClick={() => setOpTimeScale('mingguan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'mingguan' ? 'bg-white dark:bg-[#252b3b] shadow text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>Mingguan</button>
+                <button onClick={() => setOpTimeScale('bulanan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'bulanan' ? 'bg-white dark:bg-[#252b3b] shadow text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>Bulanan</button>
+                <button onClick={() => setOpTimeScale('tahunan')} className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${opTimeScale === 'tahunan' ? 'bg-white dark:bg-[#252b3b] shadow text-purple-600 dark:text-purple-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>Tahunan</button>
               </div>
             </div>
 
@@ -412,20 +407,20 @@ function AdminOverview() {
                     <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#8b5cf6" floodOpacity="0.4"/>
                   </filter>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" opacity={0.1} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <Tooltip 
-                  cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }} 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '10px 14px' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#334155', marginBottom: '4px' }}
+                  cursor={{ stroke: 'rgba(255,255,255,0.05)', strokeWidth: 2 }} 
+                  contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: '#1e293b', color: '#fff', padding: '10px 14px' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#cbd5e1', marginBottom: '4px' }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="operasi" 
                   stroke="#8b5cf6" 
                   strokeWidth={4} 
-                  dot={{ r: 4, fill: '#fff', stroke: '#8b5cf6', strokeWidth: 2 }} 
+                  dot={{ r: 4, fill: '#1a1d27', stroke: '#8b5cf6', strokeWidth: 2 }} 
                   activeDot={{ r: 7, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2 }}
                   style={{ filter: 'url(#glowPurple)' }}
                   animationDuration={1000}
@@ -442,28 +437,28 @@ function AdminOverview() {
 }
 
 // ==========================================
-// KOMPONEN PEMBANTU (UI ELEMENTS) 
+// KOMPONEN PEMBANTU (MENDUKUNG DARK MODE) 
 // ==========================================
 function MetricCard({ label, value, icon, color, onClick }: any) {
   const colorMap: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-600",
-    orange: "bg-orange-50 text-orange-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    indigo: "bg-indigo-50 text-indigo-600",
+    blue: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+    orange: "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
+    emerald: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400",
+    indigo: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400",
   };
 
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.98] transition-all duration-300 group col-span-1"
+      className="bg-white dark:bg-[#1a1d27] p-5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.98] transition-all duration-300 group col-span-1"
     >
       <div className="flex justify-between items-start mb-3">
-        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">{label}</p>
+        <p className="text-gray-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">{label}</p>
         <div className={`p-2 rounded-lg ${colorMap[color]} group-hover:scale-110 transition-transform duration-300`}>
           {icon}
         </div>
       </div>
-      <h3 className="text-3xl font-black text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors">{value}</h3>
+      <h3 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{value}</h3>
     </div>
   );
 }
@@ -476,16 +471,16 @@ function DonutCardPremium({ title, total, data, colors, onClick }: any) {
     ? [...data, { name: 'Sisa/Lama', value: remainder > 0 ? remainder : 0 }] 
     : [{ name: 'Kosong', value: 1 }];
     
-  const safeColors = total > 0 ? [...colors, '#f1f5f9'] : ['#f1f5f9'];
+  const safeColors = total > 0 ? [...colors, '#334155'] : ['#334155'];
 
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm col-span-1 md:row-span-2 flex flex-col justify-between cursor-pointer hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.98] transition-all duration-300 group"
+      className="bg-white dark:bg-[#1a1d27] p-5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm col-span-1 md:row-span-2 flex flex-col justify-between cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.98] transition-all duration-300 group"
     >
       <div>
-        <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{total}</h3>
+        <p className="text-gray-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{total}</h3>
       </div>
       
       <div className="flex flex-col xl:flex-row items-center justify-between mt-4 flex-1 gap-2">
@@ -504,12 +499,12 @@ function DonutCardPremium({ title, total, data, colors, onClick }: any) {
         <div className="flex flex-col gap-2 w-full xl:w-auto xl:ml-2">
           {total > 0 ? (
             data.map((entry: any, i: number) => (
-              <div key={i} className="flex items-center justify-between xl:justify-start gap-2 text-[10px] text-gray-500 font-medium bg-slate-50 xl:bg-transparent px-2 py-1 xl:p-0 rounded-md">
+              <div key={i} className="flex items-center justify-between xl:justify-start gap-2 text-[10px] text-gray-500 dark:text-slate-400 font-medium px-2 py-1 xl:p-0 rounded-md">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i] }}></div>
                   <span>{entry.name}</span>
                 </div>
-                <span className="font-bold text-gray-800 text-xs">{entry.value}</span>
+                <span className="font-bold text-gray-800 dark:text-slate-200 text-xs">{entry.value}</span>
               </div>
             ))
           ) : (

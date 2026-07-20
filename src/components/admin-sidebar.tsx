@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -27,7 +28,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-import { useAuth } from "@/hooks/use-auth"; // Mengambil data user untuk Footer Profile
+import { useAuth } from "@/hooks/use-auth"; 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -67,13 +68,31 @@ const menuGroups = [
 ];
 
 export default function AdminSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
-  const { user } = useAuth(); // Data admin yang sedang login
+  const { user } = useAuth(); 
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+
+  // ==========================================
+  // PERBAIKAN 1: MENCEGAH SIDEBAR RESET / MEMBESAR
+  // Membaca memori browser untuk mengunci status sidebar
+  // ==========================================
+  useEffect(() => {
+    const isSidebarCollapsed = localStorage.getItem("medicare-sidebar-collapsed");
+    if (isSidebarCollapsed === "true") {
+      setOpen(false); // Tutup sidebar secara otomatis
+    } else if (isSidebarCollapsed === "false") {
+      setOpen(true);  // Buka sidebar
+    }
+  }, [setOpen]);
+
+  // Menyimpan status ke memori setiap kali tombol buka/tutup diklik
+  useEffect(() => {
+    localStorage.setItem("medicare-sidebar-collapsed", collapsed ? "true" : "false");
+  }, [collapsed]);
 
   const isActive = (url: string) => {
     if (url === "/admin") {
@@ -94,9 +113,11 @@ export default function AdminSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-200 dark:border-slate-800 dark:bg-[#10121b] transition-colors duration-300">
       
-      {/* ================= HEADER LOGO ================= */}
+      {/* ========================================== */}
+      {/* PERBAIKAN 2: POSISI LOGO DITENGAH SAAT DIKECILKAN */}
+      {/* ========================================== */}
       <SidebarHeader className="border-b border-transparent pt-4 pb-2">
-        <div className="flex items-center gap-3 px-3">
+        <div className={`flex items-center transition-all duration-300 ${collapsed ? "justify-center px-0" : "gap-3 px-3"}`}>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
             <HeartPulse className="h-5 w-5" />
           </div>
