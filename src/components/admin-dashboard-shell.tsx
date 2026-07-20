@@ -20,7 +20,7 @@ export function AdminDashboardShell({
 }: AdminDashboardShellProps) {
   const { user } = useAuth();
   
-  // PERBAIKAN 1: Membaca memori browser (localStorage) agar Dark Mode tidak reset saat pindah halaman
+  // Mencegah Dark Mode Reset
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -28,7 +28,6 @@ export function AdminDashboardShell({
     return false;
   });
 
-  // Menyimpan pilihan ke memori setiap kali tombol diklik
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -39,19 +38,26 @@ export function AdminDashboardShell({
     }
   }, [isDarkMode]);
 
+  // Mencegah Sidebar Reset (Membesar Sendiri)
+  const defaultSidebarOpen = typeof window !== "undefined" 
+    ? localStorage.getItem("medicare-sidebar-state") !== "false" 
+    : true;
+
   return (
-    // PERBAIKAN 2: Jika Anda menggunakan Shadcn UI, defaultOpen bisa diatur agar tidak maksa besar. 
-    // Namun Shadcn Sidebar secara otomatis sudah menggunakan cookies.
-    <SidebarProvider>
+    <SidebarProvider 
+      defaultOpen={defaultSidebarOpen}
+      onOpenChange={(open) => {
+        localStorage.setItem("medicare-sidebar-state", String(open));
+      }}
+    >
       <div className="flex min-h-screen w-full bg-slate-50 dark:bg-[#0f111a] transition-colors duration-300">
         
-        {/* Sidebar */}
         <AdminSidebar />
 
-        {/* Content */}
-        <div className="flex flex-1 flex-col">
+        {/* PERBAIKAN BUG OVERLAP: Menambahkan min-w-0 agar tidak tumpang tindih */}
+        <div className="flex flex-1 flex-col min-w-0">
           
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
+          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
             </div>
@@ -85,14 +91,12 @@ export function AdminDashboardShell({
                       {title}
                     </h1>
                   )}
-
                   {description && (
                     <p className="mt-2 text-slate-500 dark:text-slate-400 transition-colors">
                       {description}
                     </p>
                   )}
                 </div>
-
                 {actions && <div>{actions}</div>}
               </div>
             )}
