@@ -5,13 +5,13 @@ import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HeartPulse, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ 
     meta: [
-      { title: "Admin Login — MediCare" }, 
+      { title: "Admin Login — ChopperCare" }, 
       { name: "description", content: "Sign in to the hospital administration portal." }
     ] 
   }),
@@ -59,38 +59,45 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-50">
+    <div 
+      className="flex min-h-screen items-center justify-center p-4"
+      style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #f0f9ff 40%, #ffffff 100%)' }}
+    >
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl gradient-primary text-primary-foreground shadow-soft">
-            <HeartPulse className="h-6 w-6" />
+        <Link to="/" className="mb-6 flex items-center justify-center gap-3 hover:opacity-90 transition-opacity">
+          
+          {/* LOGO CHOPPER BARU */}
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-md bg-[#00a2ed]">
+            <img src="/chopper-logo.jpg" alt="ChopperCare Logo" className="h-full w-full object-cover" />
           </div>
+          
           <div>
-            <p className="font-display text-lg font-bold leading-none">MediCare</p>
-            <p className="text-[11px] text-muted-foreground">Admin Portal</p>
+            <p className="font-display text-xl font-bold leading-none text-slate-900 tracking-tight">ChopperCare</p>
+            <p className="text-xs font-medium text-slate-500 mt-1">Admin Portal</p>
           </div>
         </Link>
 
-        <div className="glass-card rounded-3xl p-8 shadow-elegant bg-white">
+        <div className="rounded-3xl p-8 shadow-xl border border-white/60" style={{ backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(12px)' }}>
           <div className="mb-6 text-center">
-            <h1 className="text-xl font-semibold tracking-tight">System Login</h1>
-            <p className="text-sm text-muted-foreground mt-1">Enter your credentials to access the dashboard</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">System Login</h1>
+            <p className="text-sm text-slate-500 mt-1.5 font-medium">Enter your credentials to access the dashboard</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email" className="font-semibold text-slate-700">Email address</Label>
               <Input 
                 id="email" 
                 type="email" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
-                placeholder="admin@medicare.com" 
+                placeholder="admin@choppercare.com" 
+                className="focus-visible:ring-[#00a2ed]"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="font-semibold text-slate-700">Password</Label>
               <Input 
                 id="password" 
                 type="password" 
@@ -98,24 +105,32 @@ function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
                 placeholder="••••••••" 
+                className="focus-visible:ring-[#00a2ed]"
               />
             </div>
-            <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground shadow-soft mt-2">
+            
+            {/* TOMBOL LOGIN BARU */}
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full mt-4 h-11 text-base font-bold shadow-md hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: '#00a2ed', color: 'white' }}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in securely
+              Login
             </Button>
           </form>
 
-          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+          <div className="my-6 flex items-center gap-3 text-xs text-slate-400 font-medium">
+            <div className="h-px flex-1 bg-slate-200" /> or <div className="h-px flex-1 bg-slate-200" />
           </div>
           
-          <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
+          <Button variant="outline" className="w-full h-11 font-semibold text-slate-600 border-slate-200 hover:bg-slate-50" onClick={handleGoogle} disabled={loading}>
             Continue with Google
           </Button>
         </div>
         
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+        <p className="mt-6 text-center text-xs font-medium text-slate-500">
           Unauthorized access is strictly prohibited.
         </p>
       </div>
