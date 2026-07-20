@@ -6,7 +6,7 @@ import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
 import { 
-  Users, Stethoscope, ClipboardPlus, BedDouble, CalendarClock
+  Users, Stethoscope, ClipboardPlus, BedDouble, UserCheck
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, 
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 function AdminOverview() {
   const [timeScale, setTimeScale] = useState('bulanan');
 
-  // 1. QUERY STATISTIK KOTAK ATAS (Cepat & Ringan)
+  // 1. QUERY STATISTIK METRIK KOTAK ATAS
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
@@ -42,7 +42,7 @@ function AdminOverview() {
     },
   });
 
-  // 2. QUERY DATA GRAFIK (Menarik data asli untuk dihitung)
+  // 2. QUERY DATA GRAFIK (Menarik data asli pasien dan kamar)
   const chartDataQ = useQuery({
     queryKey: ["chart-real-data"],
     queryFn: async () => {
@@ -57,18 +57,16 @@ function AdminOverview() {
     }
   });
 
-  // 3. QUERY JADWAL DOKTER TERDEKAT
-  const schedulesQ = useQuery({
-    queryKey: ["upcoming-schedules"],
+  // 3. QUERY DOKTER AKTIF (Menggantikan Jadwal Terdekat)
+  const activeDoctorsQ = useQuery({
+    queryKey: ["active-doctors"],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
       const { data } = await supabase
-        .from("schedules")
-        .select("*, doctors(full_name), patients(nama)")
-        .gte("tanggal", today)
-        .order("tanggal", { ascending: true })
-        .order("jam", { ascending: true })
-        .limit(6);
+        .from("doctors")
+        .select("*")
+        .eq("status", "Active") // Hanya ambil yang statusnya Active
+        .order("full_name", { ascending: true }) // Urutkan berdasarkan nama
+        .limit(8); // Batasi jumlah yang tampil agar tidak terlalu panjang ke bawah
       return data || [];
     }
   });
@@ -85,7 +83,6 @@ function AdminOverview() {
     const currentYear = now.getFullYear();
     const todayString = now.toISOString().split('T')[0];
 
-    // Struktur Wadah Data Kosong
     const rawMingguan = [
       { name: 'Min', kunjungan: 0 }, { name: 'Sen', kunjungan: 0 }, { name: 'Sel', kunjungan: 0 },
       { name: 'Rab', kunjungan: 0 }, { name: 'Kam', kunjungan: 0 }, { name: 'Jum', kunjungan: 0 }, { name: 'Sab', kunjungan: 0 }
@@ -101,7 +98,6 @@ function AdminOverview() {
     let bpjsTotal = 0, bpjsHari = 0, bpjsMinggu = 0, bpjsBulan = 0;
     let nonBpjsTotal = 0, nonBpjsHari = 0, nonBpjsMinggu = 0, nonBpjsBulan = 0;
 
-    // Helper: Menentukan apakah tanggal masuk di minggu yang sama dengan hari ini
     const getWeekNumber = (d: Date) => {
       const date = new Date(d.getTime());
       date.setHours(0, 0, 0, 0);
@@ -111,7 +107,6 @@ function AdminOverview() {
     };
     const currentWeekNumber = getWeekNumber(now);
 
-    // 1. Looping Data Pasien
     pData.forEach(p => {
       if (!p.tanggal_masuk) return;
       const d = new Date(p.tanggal_masuk);
@@ -119,12 +114,10 @@ function AdminOverview() {
       const dYear = d.getFullYear();
       const dString = p.tanggal_masuk;
 
-      // Hitung Kunjungan
-      rawMingguan[d.getDay()].kunjungan += 1; // Harian dalam seminggu
-      if (dYear === currentYear) dataBulanan[dMonth].kunjungan += 1; // Bulanan tahun ini
-      tahunanMap[dYear] = (tahunanMap[dYear] || 0) + 1; // Tahunan
+      rawMingguan[d.getDay()].kunjungan += 1; 
+      if (dYear === currentYear) dataBulanan[dMonth].kunjungan += 1; 
+      tahunanMap[dYear] = (tahunanMap[dYear] || 0) + 1; 
 
-      // Hitung Donut BPJS / Non BPJS
       const isHari = dString === todayString;
       const isBulan = (dMonth === currentMonth && dYear === currentYear);
       const isMinggu = (getWeekNumber(d) === currentWeekNumber && dYear === currentYear);
@@ -142,16 +135,13 @@ function AdminOverview() {
       }
     });
 
-    // Urutkan Hari Senin -> Minggu
     const dataMingguan = [
       rawMingguan[1], rawMingguan[2], rawMingguan[3], rawMingguan[4], rawMingguan[5], rawMingguan[6], rawMingguan[0]
     ];
 
-    // Format Data Tahunan
     const dataTahunan = Object.keys(tahunanMap).sort().map(year => ({ name: year, kunjungan: tahunanMap[year] }));
     if (dataTahunan.length === 0) dataTahunan.push({ name: currentYear.toString(), kunjungan: 0 });
 
-    // 2. Looping Data Kamar (Berdasarkan created_at)
     const dataHunian = [
       { name: 'Mgg 1', terisi: 0 }, { name: 'Mgg 2', terisi: 0 }, 
       { name: 'Mgg 3', terisi: 0 }, { name: 'Mgg 4', terisi: 0 }
@@ -187,14 +177,12 @@ function AdminOverview() {
   }, [chartDataQ.data]);
 
   const s = statsQ.data || { patients: 0, doctors: 0, rooms: 0, preOp: 0 };
-  const schedules = schedulesQ.data || [];
+  const activeDoctors = activeDoctorsQ.data || [];
   
-  // Pilih data yang tampil di grafik berdasarkan tombol Toggle
   const activeChartData = timeScale === 'mingguan' ? parsedData.dataMingguan : 
                           timeScale === 'bulanan' ? parsedData.dataBulanan : 
                           parsedData.dataTahunan;
 
-  // Palet Warna Grafik Donut
   const colorsBPJS = ['#1e3a8a', '#3b82f6', '#93c5fd'];
   const colorsNonBPJS = ['#9a3412', '#f97316', '#fdba74'];
 
@@ -207,7 +195,6 @@ function AdminOverview() {
         {/* BAGIAN 1: GRID METRIK 6 KOTAK              */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          
           <MetricCard label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" />
           <MetricCard label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" />
           
@@ -222,16 +209,14 @@ function AdminOverview() {
 
           <MetricCard label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" />
           <MetricCard label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" />
-
         </div>
 
         {/* ========================================== */}
-        {/* BAGIAN 2: GRAFIK PREMIUM & JADWAL          */}
+        {/* BAGIAN 2: GRAFIK PREMIUM & DOKTER AKTIF    */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <div className="lg:col-span-2 space-y-6">
-            
             {/* Chart Kunjungan Pasien */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
@@ -298,40 +283,45 @@ function AdminOverview() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-
           </div>
 
-          {/* Kanan: Jadwal Dokter Terdekat */}
+          {/* Kanan: Daftar Dokter Aktif */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg">Jadwal Terdekat</h3>
-              <CalendarClock size={20} className="text-blue-500" />
+              <h3 className="font-bold text-gray-800 text-lg">Dokter Aktif</h3>
+              <UserCheck size={20} className="text-emerald-500" />
             </div>
 
             <div className="flex-1 space-y-0 overflow-y-auto pr-2">
-              {schedules.length === 0 ? (
-                <div className="text-center text-sm text-gray-400 py-10">Tidak ada jadwal mendatang.</div>
+              {activeDoctors.length === 0 ? (
+                <div className="text-center text-sm text-gray-400 py-10">Tidak ada dokter yang berstatus aktif saat ini.</div>
               ) : (
-                schedules.map((sch, i) => (
-                  <div key={i} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm shadow-sm border border-blue-100">
-                        {sch.doctors?.full_name?.charAt(0) || "D"}
+                activeDoctors.map((doc, i) => {
+                  // Fungsi cerdas untuk menghapus kata "dr." atau "drg." dari awal nama untuk mengambil inisial asli
+                  const cleanName = (doc.full_name || "Dokter").replace(/^(dr\.|drg\.)\s*/i, '');
+                  const initial = cleanName.charAt(0).toUpperCase();
+
+                  return (
+                    <div key={i} className="flex justify-between items-center py-4 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-sm shadow-sm border border-emerald-100">
+                          {initial}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{doc.full_name || "Nama Dokter"}</p>
+                          <p className="text-[11px] text-gray-500 font-medium">
+                            {doc.spesialisasi || "Umum"} • {doc.poli || "Poli Umum"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{sch.doctors?.full_name || "Dokter"}</p>
-                        <p className="text-[11px] text-gray-500 font-medium">{sch.patients?.nama || "Pasien"}</p>
+                      <div className="text-right flex flex-col items-end">
+                        <Badge variant="default" className="text-[10px] h-5 px-2 rounded bg-emerald-500 hover:bg-emerald-600 shadow-sm border-0">
+                          {doc.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right flex flex-col items-end">
-                      <p className="text-xs font-bold text-slate-700">{sch.tanggal}</p>
-                      <p className="text-[11px] text-slate-400 mb-1">{sch.jam}</p>
-                      <Badge variant={sch.status === "Done" ? "default" : "outline"} className="text-[9px] h-4 px-1.5 rounded-sm">
-                        {sch.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -367,7 +357,6 @@ function MetricCard({ label, value, icon, color }: any) {
   );
 }
 
-// Komponen Donut dengan Data Asli
 function DonutCardPremium({ title, total, data, colors }: any) {
   const safeTotal = total > 0 ? total : 1;
   const remainder = safeTotal - data.reduce((acc, val) => acc + val.value, 0);
