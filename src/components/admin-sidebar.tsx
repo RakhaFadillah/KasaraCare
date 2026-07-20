@@ -78,11 +78,6 @@ const menuItems = [
     url: "/admin/registrations",
     icon: ClipboardPlus,
   },
-  {
-    title: "Pengumuman",
-    url: "/admin/announcements",
-    icon: Megaphone,
-  },
 ];
 
 export default function AdminSidebar() {
