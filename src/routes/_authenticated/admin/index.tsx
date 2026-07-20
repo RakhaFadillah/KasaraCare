@@ -8,7 +8,6 @@ import { useState, useMemo } from "react";
 import { 
   Users, Stethoscope, ClipboardPlus, BedDouble, UserCheck, CalendarClock
 } from "lucide-react";
-// FIX: IMPORT RECHARTS SUDAH DILENGKAPI SEMUA
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
   AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid
@@ -25,7 +24,7 @@ function AdminOverview() {
   const [opTimeScale, setOpTimeScale] = useState('bulanan');
 
   // ==========================================
-  // FUNGSI PINDAH HALAMAN
+  // FUNGSI PINDAH HALAMAN (KEMBALI KE BAHASA INGGRIS SESUAI NAMA FILE)
   // ==========================================
   const handleNavigate = (path: string, filterValue?: string) => {
     if (filterValue) {
@@ -224,32 +223,32 @@ function AdminOverview() {
       <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
         
         {/* ========================================== */}
-        {/* BAGIAN 1: GRID METRIK 6 KOTAK              */}
+        {/* BAGIAN 1: GRID METRIK 6 KOTAK (INTERAKTIF) */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <MetricCard 
             label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" 
-            onClick={() => handleNavigate('/admin/pasien')}
+            onClick={() => handleNavigate('/admin/patients')}
           />
           <MetricCard 
             label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" 
-            onClick={() => handleNavigate('/admin/pendaftaran-operasi')}
+            onClick={() => handleNavigate('/admin/surgeries')}
           />
           <DonutCardPremium 
             title="BPJS" total={parsedData.bpjsTotal} data={parsedData.bpjsBreakdown} colors={colorsBPJS} 
-            onClick={() => handleNavigate('/admin/pasien', 'BPJS')}
+            onClick={() => handleNavigate('/admin/patients', 'BPJS')}
           />
           <DonutCardPremium 
             title="NON BPJS" total={parsedData.nonBpjsTotal} data={parsedData.nonBpjsBreakdown} colors={colorsNonBPJS} 
-            onClick={() => handleNavigate('/admin/pasien', 'Non BPJS')}
+            onClick={() => handleNavigate('/admin/patients', 'Non BPJS')}
           />
           <MetricCard 
             label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" 
-            onClick={() => handleNavigate('/admin/dokter')}
+            onClick={() => handleNavigate('/admin/doctors')}
           />
           <MetricCard 
             label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" 
-            onClick={() => handleNavigate('/admin/kamar')}
+            onClick={() => handleNavigate('/admin/rooms')}
           />
         </div>
 
