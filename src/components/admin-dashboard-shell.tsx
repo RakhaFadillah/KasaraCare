@@ -20,7 +20,7 @@ export function AdminDashboardShell({
 }: AdminDashboardShellProps) {
   const { user } = useAuth();
   
-  // Mencegah Dark Mode Reset
+  // Logika Penyimpanan Dark Mode
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -38,7 +38,7 @@ export function AdminDashboardShell({
     }
   }, [isDarkMode]);
 
-  // Mencegah Sidebar Reset (Membesar Sendiri)
+  // Logika Penyimpanan Sidebar Tunggal & Bersih (Anti-Bug)
   const defaultSidebarOpen = typeof window !== "undefined" 
     ? localStorage.getItem("medicare-sidebar-state") !== "false" 
     : true;
@@ -54,18 +54,17 @@ export function AdminDashboardShell({
         
         <AdminSidebar />
 
-        {/* PERBAIKAN BUG OVERLAP: Menambahkan min-w-0 agar tidak tumpang tindih */}
         <div className="flex flex-1 flex-col min-w-0">
           
           <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
+              <SidebarTrigger className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" />
             </div>
 
             <div className="flex items-center gap-5">
               <button 
                 onClick={() => setIsDarkMode(!isDarkMode)} 
-                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300"
+                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 cursor-pointer"
                 title={isDarkMode ? "Beralih ke Light Mode" : "Beralih ke Dark Mode"}
               >
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
