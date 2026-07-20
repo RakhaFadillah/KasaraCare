@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./admin-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { Sun, Moon } from "lucide-react"; // Menambahkan Ikon Bulan dan Matahari
 
 interface AdminDashboardShellProps {
   children: ReactNode;
@@ -17,44 +19,71 @@ export function AdminDashboardShell({
   actions,
 }: AdminDashboardShellProps) {
   const { user } = useAuth();
+  
+  // State untuk menyimpan mode gelap atau terang
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Efek untuk menyuntikkan class 'dark' ke dalam tag <html> bawaan Tailwind
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-slate-50">
+      {/* Background utama berubah otomatis saat dark mode aktif */}
+      <div className="flex min-h-screen w-full bg-slate-50 dark:bg-[#0f111a] transition-colors duration-300">
+        
         {/* Sidebar */}
         <AdminSidebar />
 
         {/* Content */}
         <div className="flex flex-1 flex-col">
-          {/* Header - Biru Solid #00a3e0 */}
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-[#00a3e0] px-6 shadow-sm text-white">
+          
+          {/* Header Minimalis dengan Tombol Dark Mode */}
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-white hover:bg-white/20" />
+              <SidebarTrigger className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" />
             </div>
 
-            <div className="text-right">
-              <p className="text-sm font-semibold">
-                {user?.email ?? "Administrator"}
-              </p>
-              <p className="text-xs text-white/80">
-                Administrator Sistem
-              </p>
+            <div className="flex items-center gap-5">
+              {/* Tombol Sakelar Tema */}
+              <button 
+                onClick={() => setIsDarkMode(!isDarkMode)} 
+                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300"
+                title={isDarkMode ? "Beralih ke Light Mode" : "Beralih ke Dark Mode"}
+              >
+                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+
+              {/* Info Pengguna */}
+              <div className="text-right">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 transition-colors">
+                  {user?.email ?? "Administrator"}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
+                  Administrator Sistem
+                </p>
+              </div>
             </div>
           </header>
 
-          {/* Page */}
-          <main className="flex-1 overflow-y-auto p-8">
+          {/* Page Content */}
+          <main className="flex-1 overflow-y-auto p-8 text-slate-900 dark:text-slate-100 transition-colors duration-300">
             {(title || description || actions) && (
               <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                   {title && (
-                    <h1 className="text-3xl font-bold tracking-tight">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">
                       {title}
                     </h1>
                   )}
 
                   {description && (
-                    <p className="mt-2 text-muted-foreground">
+                    <p className="mt-2 text-slate-500 dark:text-slate-400 transition-colors">
                       {description}
                     </p>
                   )}
