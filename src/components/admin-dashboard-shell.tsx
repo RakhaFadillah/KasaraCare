@@ -20,7 +20,9 @@ export function AdminDashboardShell({
 }: AdminDashboardShellProps) {
   const { user } = useAuth();
   
-  // Logika Penyimpanan Dark Mode
+  // ==========================================
+  // 1. LOGIKA PENYIMPANAN DARK MODE
+  // ==========================================
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -38,17 +40,25 @@ export function AdminDashboardShell({
     }
   }, [isDarkMode]);
 
-  // Logika Penyimpanan Sidebar Tunggal & Bersih (Anti-Bug)
-  const defaultSidebarOpen = typeof window !== "undefined" 
-    ? localStorage.getItem("medicare-sidebar-state") !== "false" 
-    : true;
+  // ==========================================
+  // 2. PERBAIKAN: LOGIKA SIDEBAR TERKONTROL PENUH
+  // ==========================================
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("medicare-sidebar-state") !== "false";
+    }
+    return true;
+  });
+
+  const handleSidebarToggle = (open: boolean) => {
+    setIsSidebarOpen(open);
+    localStorage.setItem("medicare-sidebar-state", String(open));
+  };
 
   return (
     <SidebarProvider 
-      defaultOpen={defaultSidebarOpen}
-      onOpenChange={(open) => {
-        localStorage.setItem("medicare-sidebar-state", String(open));
-      }}
+      open={isSidebarOpen} 
+      onOpenChange={handleSidebarToggle}
     >
       <div className="flex min-h-screen w-full bg-slate-50 dark:bg-[#0f111a] transition-colors duration-300">
         
