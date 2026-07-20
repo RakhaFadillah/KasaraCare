@@ -1,39 +1,255 @@
-return (
+// @ts-nocheck
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
+import { Badge } from "@/components/ui/badge";
+import { useState, useMemo } from "react";
+import { 
+  Users, Stethoscope, ClipboardPlus, BedDouble, UserCheck, CalendarClock
+} from "lucide-react";
+// FIX: IMPORT RECHARTS SUDAH DILENGKAPI SEMUA
+import {
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid
+} from "recharts";
+
+export const Route = createFileRoute("/_authenticated/admin/")({
+  head: () => ({ meta: [{ title: "Dashboard Admin — MediCare" }] }),
+  component: AdminOverview,
+});
+
+function AdminOverview() {
+  const navigate = useNavigate();
+  const [timeScale, setTimeScale] = useState('bulanan');
+  const [opTimeScale, setOpTimeScale] = useState('bulanan');
+
+  // ==========================================
+  // FUNGSI PINDAH HALAMAN
+  // ==========================================
+  const handleNavigate = (path: string, filterValue?: string) => {
+    if (filterValue) {
+      navigate({ to: path, search: { filter: filterValue } } as any);
+    } else {
+      navigate({ to: path } as any);
+    }
+  };
+
+  // 1. QUERY STATISTIK METRIK KOTAK ATAS
+  const statsQ = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: async () => {
+      const [p, doc, room, preOp] = await Promise.all([
+        supabase.from("patients").select("*", { count: "exact", head: true }),
+        supabase.from("doctors").select("*", { count: "exact", head: true }),
+        supabase.from("rooms").select("*", { count: "exact", head: true }),
+        supabase.from("surgeries").select("*", { count: "exact", head: true }).eq("status", "Belum Operasi"),
+      ]);
+
+      return {
+        patients: p.count ?? 0, 
+        doctors: doc.count ?? 0, 
+        rooms: room.count ?? 0, 
+        preOp: preOp.count ?? 0,
+      };
+    },
+  });
+
+  // 2. QUERY DATA GRAFIK
+  const chartDataQ = useQuery({
+    queryKey: ["chart-real-data"],
+    queryFn: async () => {
+      const [patientsRes, roomsRes, surgeriesRes] = await Promise.all([
+        supabase.from("patients").select("tanggal_masuk, tanggal_keluar, golongan"),
+        supabase.from("rooms").select("created_at, occupied_beds"),
+        supabase.from("surgeries").select("created_at") 
+      ]);
+      return {
+        patients: patientsRes.data || [],
+        rooms: roomsRes.data || [],
+        surgeries: surgeriesRes.data || []
+      };
+    }
+  });
+
+  // 3. QUERY DOKTER AKTIF
+  const activeDoctorsQ = useQuery({
+    queryKey: ["active-doctors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("doctors")
+        .select("full_name, specialization, status")
+        .ilike("status", "Available") 
+        .limit(8); 
+      
+      if (error) {
+        console.error("Gagal mengambil data dokter:", error.message);
+        return [];
+      }
+      return data || [];
+    }
+  });
+
+  // 4. QUERY TABEL JADWAL TERDEKAT 
+  const schedulesTableQ = useQuery({
+    queryKey: ["upcoming-schedules-table"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase
+        .from("schedules")
+        .select("*, doctors(full_name), patients(nama)")
+        .gte("tanggal", today)
+        .order("tanggal", { ascending: true })
+        .order("jam", { ascending: true });
+      
+      const filteredSchedules = (data || []).filter(
+        sch => sch.status?.toLowerCase() !== 'done' && sch.status?.toLowerCase() !== 'selesai'
+      );
+      return filteredSchedules.slice(0, 5);
+    }
+  });
+
+  // ==========================================
+  // LOGIKA PERHITUNGAN DATA OTOMATIS
+  // ==========================================
+  const parsedData = useMemo(() => {
+    const pData = chartDataQ.data?.patients || [];
+    const rData = chartDataQ.data?.rooms || [];
+    const sData = chartDataQ.data?.surgeries || [];
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const todayString = now.toISOString().split('T')[0];
+
+    const getWeekNumber = (d: Date) => {
+      const date = new Date(d.getTime());
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+      const week1 = new Date(date.getFullYear(), 0, 4);
+      return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
+    const currentWeekNumber = getWeekNumber(now);
+
+    const rawMingguan = [{ name: 'Min', kunjungan: 0 }, { name: 'Sen', kunjungan: 0 }, { name: 'Sel', kunjungan: 0 }, { name: 'Rab', kunjungan: 0 }, { name: 'Kam', kunjungan: 0 }, { name: 'Jum', kunjungan: 0 }, { name: 'Sab', kunjungan: 0 }];
+    const dataBulanan = [{ name: 'Jan', kunjungan: 0 }, { name: 'Feb', kunjungan: 0 }, { name: 'Mar', kunjungan: 0 }, { name: 'Apr', kunjungan: 0 }, { name: 'Mei', kunjungan: 0 }, { name: 'Jun', kunjungan: 0 }, { name: 'Jul', kunjungan: 0 }, { name: 'Ags', kunjungan: 0 }, { name: 'Sep', kunjungan: 0 }, { name: 'Okt', kunjungan: 0 }, { name: 'Nov', kunjungan: 0 }, { name: 'Des', kunjungan: 0 }];
+    const tahunanMap: Record<string, number> = {};
+
+    let bpjsTotal = 0, bpjsHari = 0, bpjsMinggu = 0, bpjsBulan = 0;
+    let nonBpjsTotal = 0, nonBpjsHari = 0, nonBpjsMinggu = 0, nonBpjsBulan = 0;
+
+    pData.forEach(p => {
+      if (!p.tanggal_masuk) return;
+      const d = new Date(p.tanggal_masuk);
+      const dMonth = d.getMonth();
+      const dYear = d.getFullYear();
+      
+      rawMingguan[d.getDay()].kunjungan += 1; 
+      if (dYear === currentYear) dataBulanan[dMonth].kunjungan += 1; 
+      tahunanMap[dYear] = (tahunanMap[dYear] || 0) + 1; 
+
+      const isHari = p.tanggal_masuk === todayString;
+      const isBulan = (dMonth === currentMonth && dYear === currentYear);
+      const isMinggu = (getWeekNumber(d) === currentWeekNumber && dYear === currentYear);
+
+      if (p.golongan === 'BPJS') {
+        bpjsTotal++;
+        if (isHari) bpjsHari++;
+        if (isMinggu) bpjsMinggu++;
+        if (isBulan) bpjsBulan++;
+      } else if (p.golongan === 'Non BPJS') {
+        nonBpjsTotal++;
+        if (isHari) nonBpjsHari++;
+        if (isMinggu) nonBpjsMinggu++;
+        if (isBulan) nonBpjsBulan++;
+      }
+    });
+
+    const dataMingguan = [rawMingguan[1], rawMingguan[2], rawMingguan[3], rawMingguan[4], rawMingguan[5], rawMingguan[6], rawMingguan[0]];
+    const dataTahunan = Object.keys(tahunanMap).sort().map(year => ({ name: year, kunjungan: tahunanMap[year] }));
+    if (dataTahunan.length === 0) dataTahunan.push({ name: currentYear.toString(), kunjungan: 0 });
+
+    const dataHunian = [{ name: 'Mgg 1', terisi: 0 }, { name: 'Mgg 2', terisi: 0 }, { name: 'Mgg 3', terisi: 0 }, { name: 'Mgg 4', terisi: 0 }];
+    rData.forEach(r => {
+      if (!r.created_at) return;
+      const d = new Date(r.created_at);
+      if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        const dateObj = d.getDate();
+        let w = dateObj <= 7 ? 0 : dateObj <= 14 ? 1 : dateObj <= 21 ? 2 : 3;
+        dataHunian[w].terisi += (r.occupied_beds || 0);
+      }
+    });
+
+    const opRawMingguan = [{ name: 'Min', operasi: 0 }, { name: 'Sen', operasi: 0 }, { name: 'Sel', operasi: 0 }, { name: 'Rab', operasi: 0 }, { name: 'Kam', operasi: 0 }, { name: 'Jum', operasi: 0 }, { name: 'Sab', operasi: 0 }];
+    const opBulanan = [{ name: 'Jan', operasi: 0 }, { name: 'Feb', operasi: 0 }, { name: 'Mar', operasi: 0 }, { name: 'Apr', operasi: 0 }, { name: 'Mei', operasi: 0 }, { name: 'Jun', operasi: 0 }, { name: 'Jul', operasi: 0 }, { name: 'Ags', operasi: 0 }, { name: 'Sep', operasi: 0 }, { name: 'Okt', operasi: 0 }, { name: 'Nov', operasi: 0 }, { name: 'Des', operasi: 0 }];
+    const opTahunanMap: Record<string, number> = {};
+
+    sData.forEach(s => {
+      if (!s.created_at) return;
+      const d = new Date(s.created_at);
+      const dMonth = d.getMonth();
+      const dYear = d.getFullYear();
+
+      opRawMingguan[d.getDay()].operasi += 1;
+      if (dYear === currentYear) opBulanan[dMonth].operasi += 1;
+      opTahunanMap[dYear] = (opTahunanMap[dYear] || 0) + 1;
+    });
+
+    const opMingguan = [opRawMingguan[1], opRawMingguan[2], opRawMingguan[3], opRawMingguan[4], opRawMingguan[5], opRawMingguan[6], opRawMingguan[0]];
+    const opTahunan = Object.keys(opTahunanMap).sort().map(year => ({ name: year, operasi: opTahunanMap[year] }));
+    if (opTahunan.length === 0) opTahunan.push({ name: currentYear.toString(), operasi: 0 });
+
+    return {
+      dataMingguan, dataBulanan, dataTahunan, dataHunian,
+      opMingguan, opBulanan, opTahunan,
+      bpjsTotal, nonBpjsTotal,
+      bpjsBreakdown: [{ name: 'Hari Ini', value: bpjsHari }, { name: 'Minggu Ini', value: bpjsMinggu }, { name: 'Bulan Ini', value: bpjsBulan }],
+      nonBpjsBreakdown: [{ name: 'Hari Ini', value: nonBpjsHari }, { name: 'Minggu Ini', value: nonBpjsMinggu }, { name: 'Bulan Ini', value: nonBpjsBulan }]
+    };
+  }, [chartDataQ.data]);
+
+  const s = statsQ.data || { patients: 0, doctors: 0, rooms: 0, preOp: 0 };
+  const activeDoctors = activeDoctorsQ.data || [];
+  const activeSchedules = schedulesTableQ.data || [];
+  
+  const activeChartData = timeScale === 'mingguan' ? parsedData.dataMingguan : timeScale === 'bulanan' ? parsedData.dataBulanan : parsedData.dataTahunan;
+  const activeOpChartData = opTimeScale === 'mingguan' ? parsedData.opMingguan : opTimeScale === 'bulanan' ? parsedData.opBulanan : parsedData.opTahunan;
+
+  const colorsBPJS = ['#1e3a8a', '#3b82f6', '#93c5fd'];
+  const colorsNonBPJS = ['#9a3412', '#f97316', '#fdba74'];
+
+  return (
     <AdminDashboardShell title="Analytics" description="Monitor performa dan aktivitas rumah sakit.">
       
       <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
         
         {/* ========================================== */}
-        {/* BAGIAN 1: GRID METRIK 6 KOTAK (INTERAKTIF) */}
+        {/* BAGIAN 1: GRID METRIK 6 KOTAK              */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <MetricCard 
             label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" 
-            onClick={() => handleNavigate('/admin/patients')}
+            onClick={() => handleNavigate('/admin/pasien')}
           />
           <MetricCard 
             label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" 
-            // FIX: Merubah URL menjadi "pendaftaran-operasi" sesuai sidebar Anda
-            onClick={() => handleNavigate('/admin/pendaftaran-operasi')} 
+            onClick={() => handleNavigate('/admin/pendaftaran-operasi')}
           />
-          
           <DonutCardPremium 
             title="BPJS" total={parsedData.bpjsTotal} data={parsedData.bpjsBreakdown} colors={colorsBPJS} 
-            onClick={() => handleNavigate('/admin/patients', 'BPJS')}
+            onClick={() => handleNavigate('/admin/pasien', 'BPJS')}
           />
           <DonutCardPremium 
             title="NON BPJS" total={parsedData.nonBpjsTotal} data={parsedData.nonBpjsBreakdown} colors={colorsNonBPJS} 
-            onClick={() => handleNavigate('/admin/patients', 'Non BPJS')}
+            onClick={() => handleNavigate('/admin/pasien', 'Non BPJS')}
           />
-
           <MetricCard 
             label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" 
-            // FIX: Merubah URL menjadi "doctors" agar tidak Not Found (Atau ubah jadi "dokter" jika nama rutenya dokter)
-            onClick={() => handleNavigate('/admin/doctors')}
+            onClick={() => handleNavigate('/admin/dokter')}
           />
           <MetricCard 
             label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" 
-            onClick={() => handleNavigate('/admin/rooms')}
+            onClick={() => handleNavigate('/admin/kamar')}
           />
         </div>
 
@@ -43,7 +259,6 @@ return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Chart Kunjungan Pasien (DENGAN EFEK SHADOW BIRU) */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
                 <h3 className="font-bold text-gray-800 text-lg">Dinamika Kunjungan Pasien</h3>
@@ -70,7 +285,6 @@ return (
               </ResponsiveContainer>
             </div>
 
-            {/* Chart Tren Hunian Kamar (DENGAN EFEK SHADOW BIRU) */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
               <h3 className="mb-6 font-bold text-gray-800 text-lg">Tren Hunian Kamar (Bulan Ini)</h3>
               <ResponsiveContainer width="100%" height={180}>
@@ -94,7 +308,6 @@ return (
             </div>
           </div>
 
-          {/* Daftar Dokter Aktif (DENGAN EFEK SHADOW BIRU) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg">Dokter Aktif</h3>
@@ -130,7 +343,6 @@ return (
         {/* ========================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* KIRI: Tabel Jadwal Terdekat (DENGAN EFEK SHADOW BIRU) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg">Jadwal Terdekat (Menunggu)</h3>
@@ -184,7 +396,6 @@ return (
             </div>
           </div>
 
-          {/* KANAN: Line Chart Pendaftaran Operasi (DENGAN EFEK SHADOW BIRU) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.99] transition-all duration-300">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg">Tren Pendaftaran Operasi</h3>
@@ -232,7 +443,7 @@ return (
 }
 
 // ==========================================
-// KOMPONEN PEMBANTU (UI ELEMENTS) TETAP SAMA
+// KOMPONEN PEMBANTU (UI ELEMENTS) 
 // ==========================================
 function MetricCard({ label, value, icon, color, onClick }: any) {
   const colorMap: Record<string, string> = {
