@@ -71,7 +71,6 @@ export function CrudTable<T extends { id: string }>({
   };
 
   const filtered = q.data?.filter((r) => !search || searchKeys.some((k) => {
-    // Penanganan khusus untuk search relasi bersarang (misal "clinics.name")
     const keys = k.split(".");
     let val: any = r;
     for (const key of keys) {
@@ -81,8 +80,8 @@ export function CrudTable<T extends { id: string }>({
   })) ?? [];
 
   return (
-    // PERBAIKAN 1: Gaya Kotak Utama Kravio Style (Mendukung Dark Mode)
-    <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors duration-300">
+    // PERBAIKAN: Menambahkan hover:border-blue-500, hover:shadow-xl, hover:shadow-blue-500/20 agar shadow biru muncul!
+    <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300">
       
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Input 
@@ -99,7 +98,6 @@ export function CrudTable<T extends { id: string }>({
             </Button>
           </DialogTrigger>
           
-          {/* PERBAIKAN 2: Pop-up Form mendukung Dark Mode */}
           <DialogContent className="max-h-[90vh] overflow-auto dark:bg-[#1a1d27] dark:border-slate-800 transition-colors duration-300">
             <DialogHeader>
               <DialogTitle className="text-gray-900 dark:text-white">
@@ -170,7 +168,6 @@ export function CrudTable<T extends { id: string }>({
         </Dialog>
       </div>
 
-      {/* PERBAIKAN 3: Area Tabel */}
       <div className="text-slate-800 dark:text-slate-200">
         {q.isLoading ? (
           <Skeleton className="h-40 w-full dark:bg-slate-800/50" />
