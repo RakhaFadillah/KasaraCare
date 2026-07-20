@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
@@ -19,8 +19,20 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 function AdminOverview() {
+  const navigate = useNavigate();
   const [timeScale, setTimeScale] = useState('bulanan');
   const [opTimeScale, setOpTimeScale] = useState('bulanan');
+
+  // ==========================================
+  // FUNGSI PINDAH HALAMAN (ROUTING)
+  // ==========================================
+  const handleNavigate = (path: string, filterValue?: string) => {
+    if (filterValue) {
+      navigate({ to: path, search: { filter: filterValue } } as any);
+    } else {
+      navigate({ to: path } as any);
+    }
+  };
 
   // 1. QUERY STATISTIK METRIK KOTAK ATAS
   const statsQ = useQuery({
@@ -42,14 +54,14 @@ function AdminOverview() {
     },
   });
 
-  // 2. QUERY DATA GRAFIK (Pasien, Kamar, dan Operasi)
+  // 2. QUERY DATA GRAFIK
   const chartDataQ = useQuery({
     queryKey: ["chart-real-data"],
     queryFn: async () => {
       const [patientsRes, roomsRes, surgeriesRes] = await Promise.all([
         supabase.from("patients").select("tanggal_masuk, tanggal_keluar, golongan"),
         supabase.from("rooms").select("created_at, occupied_beds"),
-        supabase.from("surgeries").select("created_at") // Membaca tanggal pendaftaran operasi
+        supabase.from("surgeries").select("created_at") 
       ]);
       return {
         patients: patientsRes.data || [],
@@ -77,7 +89,7 @@ function AdminOverview() {
     }
   });
 
-  // 4. QUERY TABEL JADWAL TERDEKAT (Otomatis Filter Selesai & Limit 5)
+  // 4. QUERY TABEL JADWAL TERDEKAT 
   const schedulesTableQ = useQuery({
     queryKey: ["upcoming-schedules-table"],
     queryFn: async () => {
@@ -89,11 +101,9 @@ function AdminOverview() {
         .order("tanggal", { ascending: true })
         .order("jam", { ascending: true });
       
-      // Filter Cerdas: Membuang jadwal yang sudah 'Done' atau 'Selesai', lalu ambil 5 teratas
       const filteredSchedules = (data || []).filter(
         sch => sch.status?.toLowerCase() !== 'done' && sch.status?.toLowerCase() !== 'selesai'
       );
-      
       return filteredSchedules.slice(0, 5);
     }
   });
@@ -120,17 +130,8 @@ function AdminOverview() {
     };
     const currentWeekNumber = getWeekNumber(now);
 
-    // Wadah Data Kunjungan Pasien
-    const rawMingguan = [
-      { name: 'Min', kunjungan: 0 }, { name: 'Sen', kunjungan: 0 }, { name: 'Sel', kunjungan: 0 },
-      { name: 'Rab', kunjungan: 0 }, { name: 'Kam', kunjungan: 0 }, { name: 'Jum', kunjungan: 0 }, { name: 'Sab', kunjungan: 0 }
-    ];
-    const dataBulanan = [
-      { name: 'Jan', kunjungan: 0 }, { name: 'Feb', kunjungan: 0 }, { name: 'Mar', kunjungan: 0 },
-      { name: 'Apr', kunjungan: 0 }, { name: 'Mei', kunjungan: 0 }, { name: 'Jun', kunjungan: 0 },
-      { name: 'Jul', kunjungan: 0 }, { name: 'Ags', kunjungan: 0 }, { name: 'Sep', kunjungan: 0 },
-      { name: 'Okt', kunjungan: 0 }, { name: 'Nov', kunjungan: 0 }, { name: 'Des', kunjungan: 0 }
-    ];
+    const rawMingguan = [{ name: 'Min', kunjungan: 0 }, { name: 'Sen', kunjungan: 0 }, { name: 'Sel', kunjungan: 0 }, { name: 'Rab', kunjungan: 0 }, { name: 'Kam', kunjungan: 0 }, { name: 'Jum', kunjungan: 0 }, { name: 'Sab', kunjungan: 0 }];
+    const dataBulanan = [{ name: 'Jan', kunjungan: 0 }, { name: 'Feb', kunjungan: 0 }, { name: 'Mar', kunjungan: 0 }, { name: 'Apr', kunjungan: 0 }, { name: 'Mei', kunjungan: 0 }, { name: 'Jun', kunjungan: 0 }, { name: 'Jul', kunjungan: 0 }, { name: 'Ags', kunjungan: 0 }, { name: 'Sep', kunjungan: 0 }, { name: 'Okt', kunjungan: 0 }, { name: 'Nov', kunjungan: 0 }, { name: 'Des', kunjungan: 0 }];
     const tahunanMap: Record<string, number> = {};
 
     let bpjsTotal = 0, bpjsHari = 0, bpjsMinggu = 0, bpjsBulan = 0;
@@ -167,10 +168,7 @@ function AdminOverview() {
     const dataTahunan = Object.keys(tahunanMap).sort().map(year => ({ name: year, kunjungan: tahunanMap[year] }));
     if (dataTahunan.length === 0) dataTahunan.push({ name: currentYear.toString(), kunjungan: 0 });
 
-    // Wadah Data Kamar
-    const dataHunian = [
-      { name: 'Mgg 1', terisi: 0 }, { name: 'Mgg 2', terisi: 0 }, { name: 'Mgg 3', terisi: 0 }, { name: 'Mgg 4', terisi: 0 }
-    ];
+    const dataHunian = [{ name: 'Mgg 1', terisi: 0 }, { name: 'Mgg 2', terisi: 0 }, { name: 'Mgg 3', terisi: 0 }, { name: 'Mgg 4', terisi: 0 }];
     rData.forEach(r => {
       if (!r.created_at) return;
       const d = new Date(r.created_at);
@@ -181,17 +179,8 @@ function AdminOverview() {
       }
     });
 
-    // Wadah Data Pendaftaran Operasi
-    const opRawMingguan = [
-      { name: 'Min', operasi: 0 }, { name: 'Sen', operasi: 0 }, { name: 'Sel', operasi: 0 },
-      { name: 'Rab', operasi: 0 }, { name: 'Kam', operasi: 0 }, { name: 'Jum', operasi: 0 }, { name: 'Sab', operasi: 0 }
-    ];
-    const opBulanan = [
-      { name: 'Jan', operasi: 0 }, { name: 'Feb', operasi: 0 }, { name: 'Mar', operasi: 0 },
-      { name: 'Apr', operasi: 0 }, { name: 'Mei', operasi: 0 }, { name: 'Jun', operasi: 0 },
-      { name: 'Jul', operasi: 0 }, { name: 'Ags', operasi: 0 }, { name: 'Sep', operasi: 0 },
-      { name: 'Okt', operasi: 0 }, { name: 'Nov', operasi: 0 }, { name: 'Des', operasi: 0 }
-    ];
+    const opRawMingguan = [{ name: 'Min', operasi: 0 }, { name: 'Sen', operasi: 0 }, { name: 'Sel', operasi: 0 }, { name: 'Rab', operasi: 0 }, { name: 'Kam', operasi: 0 }, { name: 'Jum', operasi: 0 }, { name: 'Sab', operasi: 0 }];
+    const opBulanan = [{ name: 'Jan', operasi: 0 }, { name: 'Feb', operasi: 0 }, { name: 'Mar', operasi: 0 }, { name: 'Apr', operasi: 0 }, { name: 'Mei', operasi: 0 }, { name: 'Jun', operasi: 0 }, { name: 'Jul', operasi: 0 }, { name: 'Ags', operasi: 0 }, { name: 'Sep', operasi: 0 }, { name: 'Okt', operasi: 0 }, { name: 'Nov', operasi: 0 }, { name: 'Des', operasi: 0 }];
     const opTahunanMap: Record<string, number> = {};
 
     sData.forEach(s => {
@@ -234,15 +223,35 @@ function AdminOverview() {
       <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
         
         {/* ========================================== */}
-        {/* BAGIAN 1: GRID METRIK 6 KOTAK              */}
+        {/* BAGIAN 1: GRID METRIK 6 KOTAK (INTERAKTIF) */}
         {/* ========================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <MetricCard label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" />
-          <MetricCard label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" />
-          <DonutCardPremium title="BPJS" total={parsedData.bpjsTotal} data={parsedData.bpjsBreakdown} colors={colorsBPJS} />
-          <DonutCardPremium title="NON BPJS" total={parsedData.nonBpjsTotal} data={parsedData.nonBpjsBreakdown} colors={colorsNonBPJS} />
-          <MetricCard label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" />
-          <MetricCard label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" />
+          <MetricCard 
+            label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" 
+            onClick={() => handleNavigate('/admin/patients')}
+          />
+          <MetricCard 
+            label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" 
+            onClick={() => handleNavigate('/admin/surgeries')}
+          />
+          
+          <DonutCardPremium 
+            title="BPJS" total={parsedData.bpjsTotal} data={parsedData.bpjsBreakdown} colors={colorsBPJS} 
+            onClick={() => handleNavigate('/admin/patients', 'BPJS')}
+          />
+          <DonutCardPremium 
+            title="NON BPJS" total={parsedData.nonBpjsTotal} data={parsedData.nonBpjsBreakdown} colors={colorsNonBPJS} 
+            onClick={() => handleNavigate('/admin/patients', 'Non BPJS')}
+          />
+
+          <MetricCard 
+            label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" 
+            onClick={() => handleNavigate('/admin/doctors')}
+          />
+          <MetricCard 
+            label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" 
+            onClick={() => handleNavigate('/admin/rooms')}
+          />
         </div>
 
         {/* ========================================== */}
@@ -338,7 +347,7 @@ function AdminOverview() {
         {/* ========================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* KIRI: Tabel Jadwal Terdekat (Maksimal 5) */}
+          {/* KIRI: Tabel Jadwal Terdekat */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-gray-800 text-lg">Jadwal Terdekat (Menunggu)</h3>
@@ -443,7 +452,7 @@ function AdminOverview() {
 // KOMPONEN PEMBANTU (UI ELEMENTS)
 // ==========================================
 
-function MetricCard({ label, value, icon, color }: any) {
+function MetricCard({ label, value, icon, color, onClick }: any) {
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
     orange: "bg-orange-50 text-orange-600",
@@ -452,21 +461,24 @@ function MetricCard({ label, value, icon, color }: any) {
   };
 
   return (
-    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 group col-span-1">
+    <div 
+      onClick={onClick}
+      className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between cursor-pointer hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.98] transition-all duration-300 group col-span-1"
+    >
       <div className="flex justify-between items-start mb-3">
         <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">{label}</p>
         <div className={`p-2 rounded-lg ${colorMap[color]} group-hover:scale-110 transition-transform duration-300`}>
           {icon}
         </div>
       </div>
-      <h3 className="text-2xl font-black text-gray-900 tracking-tight">{value}</h3>
+      <h3 className="text-3xl font-black text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors">{value}</h3>
     </div>
   );
 }
 
-function DonutCardPremium({ title, total, data, colors }: any) {
+function DonutCardPremium({ title, total, data, colors, onClick }: any) {
   const safeTotal = total > 0 ? total : 1;
-  const remainder = safeTotal - data.reduce((acc, val) => acc + val.value, 0);
+  const remainder = safeTotal - data.reduce((acc: any, val: any) => acc + val.value, 0);
   
   const pieData = total > 0 
     ? [...data, { name: 'Sisa/Lama', value: remainder > 0 ? remainder : 0 }] 
@@ -475,10 +487,13 @@ function DonutCardPremium({ title, total, data, colors }: any) {
   const safeColors = total > 0 ? [...colors, '#f1f5f9'] : ['#f1f5f9'];
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm col-span-1 md:row-span-2 flex flex-col justify-between hover:shadow-md transition-all duration-300">
+    <div 
+      onClick={onClick}
+      className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm col-span-1 md:row-span-2 flex flex-col justify-between cursor-pointer hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 active:scale-[0.98] transition-all duration-300 group"
+    >
       <div>
         <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-gray-900">{total}</h3>
+        <h3 className="text-3xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{total}</h3>
       </div>
       
       <div className="flex flex-col xl:flex-row items-center justify-between mt-4 flex-1 gap-2">
