@@ -52,14 +52,14 @@ export function CrudTable<T extends { id: string }>({
         if (error) throw error;
       }
     },
-    onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: [table] }); setOpen(false); setEditing(null); setForm({}); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Save failed"),
+    onSuccess: () => { toast.success("Tersimpan"); qc.invalidateQueries({ queryKey: [table] }); setOpen(false); setEditing(null); setForm({}); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Gagal menyimpan data"),
   });
 
   const deleteM = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from(table as any).delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: [table] }); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Delete failed"),
+    onSuccess: () => { toast.success("Dihapus"); qc.invalidateQueries({ queryKey: [table] }); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Gagal menghapus data"),
   });
 
   const openCreate = () => { setEditing(null); setForm({}); setOpen(true); };
@@ -70,72 +70,160 @@ export function CrudTable<T extends { id: string }>({
     setForm(init); setOpen(true);
   };
 
-  const filtered = q.data?.filter((r) => !search || searchKeys.some((k) => String((r as any)[k] ?? "").toLowerCase().includes(search.toLowerCase()))) ?? [];
+  const filtered = q.data?.filter((r) => !search || searchKeys.some((k) => {
+    // Penanganan khusus untuk search relasi bersarang (misal "clinics.name")
+    const keys = k.split(".");
+    let val: any = r;
+    for (const key of keys) {
+      val = val?.[key];
+    }
+    return String(val ?? "").toLowerCase().includes(search.toLowerCase());
+  })) ?? [];
 
   return (
-    <div className="glass-card rounded-3xl p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+    // PERBAIKAN 1: Gaya Kotak Utama Kravio Style (Mendukung Dark Mode)
+    <div className="bg-white dark:bg-[#1a1d27] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 transition-colors duration-300">
+      
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <Input 
+          placeholder="Search…" 
+          value={search} 
+          onChange={(e) => setSearch(e.target.value)} 
+          className="max-w-xs dark:bg-[#151722] dark:border-slate-700 dark:text-white transition-colors" 
+        />
+        
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreate} className="gradient-primary text-primary-foreground shadow-soft"><Plus className="mr-1 h-4 w-4" />New</Button>
+            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm dark:shadow-blue-900/20 transition-all">
+              <Plus className="mr-1 h-4 w-4" /> New
+            </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-auto">
-            <DialogHeader><DialogTitle>{editing ? `Edit ${title}` : `New ${title}`}</DialogTitle></DialogHeader>
-            <div className="grid gap-3 py-2">
+          
+          {/* PERBAIKAN 2: Pop-up Form mendukung Dark Mode */}
+          <DialogContent className="max-h-[90vh] overflow-auto dark:bg-[#1a1d27] dark:border-slate-800 transition-colors duration-300">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 dark:text-white">
+                {editing ? `Edit ${title}` : `New ${title}`}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-3">
               {fields.map((f) => (
                 <div key={f.key} className="space-y-1.5">
-                  <label className="text-sm font-medium">{f.label}{f.required && " *"}</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                    {f.label}{f.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  
                   {f.type === "textarea" ? (
-                    <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" rows={3}
-                      value={form[f.key] ?? ""} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} required={f.required} />
+                    <textarea 
+                      className="w-full rounded-lg border border-input dark:border-slate-700 bg-background dark:bg-[#151722] px-3 py-2 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" 
+                      rows={3}
+                      value={form[f.key] ?? ""} 
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} 
+                      required={f.required} 
+                    />
                   ) : f.type === "select" ? (
-                    <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={form[f.key] ?? ""} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} required={f.required}>
-                      <option value="">— select —</option>
-                      {f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    <select 
+                      className="w-full rounded-lg border border-input dark:border-slate-700 bg-background dark:bg-[#151722] px-3 py-2 text-sm dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                      value={form[f.key] ?? ""} 
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} 
+                      required={f.required}
+                    >
+                      <option value="" className="dark:bg-[#1a1d27]">— select —</option>
+                      {f.options?.map((o) => (
+                        <option key={o.value} value={o.value} className="dark:bg-[#1a1d27]">
+                          {o.label}
+                        </option>
+                      ))}
                     </select>
                   ) : f.type === "checkbox" ? (
-                    <input type="checkbox" checked={!!form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: e.target.checked })} />
+                    <input 
+                      type="checkbox" 
+                      checked={!!form[f.key]} 
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.checked })} 
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
                   ) : (
-                    <Input type={f.type ?? "text"} value={form[f.key] ?? ""} onChange={(e) => setForm({ ...form, [f.key]: f.type === "number" ? Number(e.target.value) : e.target.value })} required={f.required} min={f.min} max={f.max} />
+                    <Input 
+                      type={f.type ?? "text"} 
+                      value={form[f.key] ?? ""} 
+                      onChange={(e) => setForm({ ...form, [f.key]: f.type === "number" ? Number(e.target.value) : e.target.value })} 
+                      required={f.required} 
+                      min={f.min} 
+                      max={f.max} 
+                      className="dark:bg-[#151722] dark:border-slate-700 dark:text-white transition-colors"
+                    />
                   )}
                 </div>
               ))}
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={() => upsertM.mutate()} disabled={upsertM.isPending} className="gradient-primary text-primary-foreground shadow-soft">Save</Button>
+            
+            <DialogFooter className="mt-4 gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setOpen(false)} className="dark:bg-transparent dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+                Cancel
+              </Button>
+              <Button onClick={() => upsertM.mutate()} disabled={upsertM.isPending} className="bg-blue-600 hover:bg-blue-700 text-white">
+                {upsertM.isPending ? "Menyimpan..." : "Save"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {q.isLoading ? <Skeleton className="h-40 w-full" /> : filtered.length === 0 ? (
-        <EmptyState title="No records" description={`No ${title.toLowerCase()} yet.`} />
-      ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((c) => <TableHead key={c.key}>{c.label}</TableHead>)}
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => (
-                <TableRow key={r.id}>
-                  {columns.map((c) => <TableCell key={c.key}>{c.render ? c.render(r) : String((r as any)[c.key] ?? "—")}</TableCell>)}
-                  <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete this record?")) deleteM.mutate(r.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </TableCell>
+      {/* PERBAIKAN 3: Area Tabel */}
+      <div className="text-slate-800 dark:text-slate-200">
+        {q.isLoading ? (
+          <Skeleton className="h-40 w-full dark:bg-slate-800/50" />
+        ) : filtered.length === 0 ? (
+          <EmptyState title="Belum ada data" description={`Tidak ada data ${title.toLowerCase()} untuk ditampilkan.`} />
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800/60">
+            <Table>
+              <TableHeader className="bg-slate-50 dark:bg-slate-800/30">
+                <TableRow className="dark:border-slate-800/60 hover:bg-transparent">
+                  {columns.map((c) => (
+                    <TableHead key={c.key} className="font-semibold text-slate-600 dark:text-slate-400">
+                      {c.label}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right font-semibold text-slate-600 dark:text-slate-400">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+              </TableHeader>
+              <TableBody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {filtered.map((r) => (
+                  <TableRow key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border-transparent">
+                    {columns.map((c) => (
+                      <TableCell key={c.key} className="py-3">
+                        {c.render ? c.render(r) : String((r as any)[c.key] ?? "—")}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-right py-3">
+                      <div className="flex justify-end gap-1">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => openEdit(r)}
+                          className="h-8 w-8 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 dark:hover:bg-blue-900/20"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => { if (confirm("Yakin ingin menghapus data ini?")) deleteM.mutate(r.id); }}
+                          className="h-8 w-8 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
