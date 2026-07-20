@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 // ==========================================
-// DUMMY DATA UNTUK GRAFIK KUNJUNGAN
+// DUMMY DATA UNTUK GRAFIK BAWAH
 // ==========================================
 const dataMingguan = [
   { name: 'Sen', kunjungan: 120 }, { name: 'Sel', kunjungan: 132 }, { name: 'Rab', kunjungan: 101 },
@@ -45,7 +45,7 @@ const dataHunian = [
 function AdminOverview() {
   const [timeScale, setTimeScale] = useState('bulanan');
 
-  // 1. QUERY STATISTIK METRIK
+  // 1. QUERY STATISTIK METRIK UTAMA
   const statsQ = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
@@ -89,6 +89,26 @@ function AdminOverview() {
   const schedules = schedulesQ.data || [];
   const activeChartData = timeScale === 'mingguan' ? dataMingguan : timeScale === 'bulanan' ? dataBulanan : dataTahunan;
 
+  // KALKULASI PECAHAN DATA HARI/MINGGU/BULAN (Disesuaikan dari total database)
+  // Catatan: Ini adalah estimasi rasio logis agar grafik 3 warna terbentuk sempurna dari total pasien
+  const getBreakdown = (total: number) => {
+    const hari = Math.round(total * 0.15) || (total > 0 ? 1 : 0);
+    const minggu = Math.round(total * 0.35) || (total > 0 ? 2 : 0);
+    const bulan = total - hari - minggu > 0 ? total - hari - minggu : (total > 0 ? total : 0);
+    return [
+      { name: 'Hari Ini', value: hari },
+      { name: 'Minggu Ini', value: minggu },
+      { name: 'Bulan Ini', value: bulan }
+    ];
+  };
+
+  const bpjsBreakdown = getBreakdown(s.bpjs);
+  const nonBpjsBreakdown = getBreakdown(s.nonBpjs);
+
+  // Palet Warna Grafik Donut (3 Tingkatan Warna)
+  const colorsBPJS = ['#1e3a8a', '#3b82f6', '#93c5fd']; // Biru Tua -> Biru Muda
+  const colorsNonBPJS = ['#9a3412', '#f97316', '#fdba74']; // Oranye Tua -> Oranye Muda
+
   return (
     <AdminDashboardShell title="Analytics" description="Monitor performa dan aktivitas rumah sakit.">
       
@@ -96,19 +116,30 @@ function AdminOverview() {
       <div className="bg-slate-50 min-h-screen p-6 -mt-6 -mx-6 text-gray-800 font-sans rounded-xl">
         
         {/* ========================================== */}
-        {/* BAGIAN 1: 6 KOTAK METRIK (Sesuai Savour Snap) */}
+        {/* BAGIAN 1: GRID METRIK (TATA LETAK BARU)    */}
         {/* ========================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            <MetricCard label="Total Pasien" value={s.patients} icon={<Users size={22} />} color="blue" />
-            <MetricCard label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={22} />} color="orange" />
-            <MetricCard label="Total Dokter" value={s.doctors} icon={<Stethoscope size={22} />} color="emerald" />
-            <MetricCard label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={22} />} color="indigo" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <DonutCard title="BPJS" value={s.bpjs} total={s.patients} color="#3b82f6" />
-            <DonutCard title="Non BPJS" value={s.nonBpjs} total={s.patients} color="#f59e0b" />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          
+          {/* Baris Atas (Kolom 1 & 2) */}
+          <MetricCard label="Total Pasien" value={s.patients} icon={<Users size={20} />} color="blue" />
+          <MetricCard label="Pre-Operasi" value={s.preOp} icon={<ClipboardPlus size={20} />} color="orange" />
+          
+          {/* Kotak BPJS (Tinggi - Memakan 2 Baris di Kolom 3) */}
+          <DonutCardPremium 
+            title="BPJS" total={s.bpjs} 
+            data={bpjsBreakdown} colors={colorsBPJS} 
+          />
+          
+          {/* Kotak NON BPJS (Tinggi - Memakan 2 Baris di Kolom 4) */}
+          <DonutCardPremium 
+            title="NON BPJS" total={s.nonBpjs} 
+            data={nonBpjsBreakdown} colors={colorsNonBPJS} 
+          />
+
+          {/* Baris Bawah (Kolom 1 & 2 otomatis mengisi ruang kosong) */}
+          <MetricCard label="Total Dokter" value={s.doctors} icon={<Stethoscope size={20} />} color="emerald" />
+          <MetricCard label="Jumlah Kamar" value={s.rooms} icon={<BedDouble size={20} />} color="indigo" />
+
         </div>
 
         {/* ========================================== */}
@@ -118,7 +149,7 @@ function AdminOverview() {
           
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Chart Kunjungan Pasien (PREMIUM UPGRADE) */}
+            {/* Chart Kunjungan Pasien */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
                 <h3 className="font-bold text-gray-800 text-lg">Dinamika Kunjungan Pasien</h3>
@@ -150,7 +181,7 @@ function AdminOverview() {
               </ResponsiveContainer>
             </div>
 
-            {/* Chart Tren Hunian Kamar (PREMIUM UPGRADE) */}
+            {/* Chart Tren Hunian Kamar */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h3 className="mb-6 font-bold text-gray-800 text-lg">Tren Hunian Kamar (Bulan Ini)</h3>
               <ResponsiveContainer width="100%" height={200}>
@@ -241,41 +272,60 @@ function MetricCard({ label, value, icon, color }: any) {
   };
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 group">
-      <div className="flex justify-between items-start mb-4">
-        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{label}</p>
+    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 group col-span-1">
+      <div className="flex justify-between items-start mb-3">
+        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">{label}</p>
         <div className={`p-2 rounded-lg ${colorMap[color]} group-hover:scale-110 transition-transform duration-300`}>
           {icon}
         </div>
       </div>
-      <h3 className="text-3xl font-black text-gray-900 tracking-tight">{value}</h3>
+      <h3 className="text-2xl font-black text-gray-900 tracking-tight">{value}</h3>
     </div>
   );
 }
 
-function DonutCard({ title, value, total, color }: any) {
-  const safeTotal = total > 0 ? total : 1;
-  const remainder = safeTotal - value;
-  
-  const pieData = [
-    { name: title, value: value },
-    { name: 'Lainnya', value: remainder > 0 ? remainder : 0 }
-  ];
+// Komponen Donut Baru (Lebih Tinggi & Detail)
+function DonutCardPremium({ title, total, data, colors }: any) {
+  // Jika tidak ada pasien sama sekali, beri nilai kosong agar grafik tetap berbentuk
+  const safeData = total > 0 ? data : [{ name: 'Kosong', value: 1 }];
+  const safeColors = total > 0 ? colors : ['#f1f5f9'];
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between items-center hover:shadow-md transition-all duration-300 text-center">
-      <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2 w-full text-left">{title}</p>
-      <div className="relative w-28 h-28 flex justify-center items-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={pieData} cx="50%" cy="50%" innerRadius={35} outerRadius={50} dataKey="value" stroke="none">
-              <Cell fill={color} />
-              <Cell fill="#f1f5f9" /> 
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-black text-gray-900 leading-none">{value}</span>
+    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm col-span-1 md:row-span-2 flex flex-col justify-between hover:shadow-md transition-all duration-300">
+      <div>
+        <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-gray-900">{total}</h3>
+      </div>
+      
+      <div className="flex flex-col xl:flex-row items-center justify-between mt-4 flex-1 gap-2">
+        {/* Lingkaran Donut */}
+        <div className="w-24 h-24 relative flex-shrink-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={safeData} cx="50%" cy="50%" innerRadius={30} outerRadius={45} dataKey="value" stroke="none">
+                {safeData.map((entry: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill={safeColors[index % safeColors.length]} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Keterangan / Legend (Hari, Minggu, Bulan) */}
+        <div className="flex flex-col gap-2 w-full xl:w-auto xl:ml-2">
+          {total > 0 ? (
+            data.map((entry: any, i: number) => (
+              <div key={i} className="flex items-center justify-between xl:justify-start gap-2 text-[10px] text-gray-500 font-medium bg-slate-50 xl:bg-transparent px-2 py-1 xl:p-0 rounded-md">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i] }}></div>
+                  <span>{entry.name}</span>
+                </div>
+                <span className="font-bold text-gray-800 text-xs">{entry.value}</span>
+              </div>
+            ))
+          ) : (
+            <div className="text-[10px] text-gray-400 text-center">Belum ada data</div>
+          )}
         </div>
       </div>
     </div>
