@@ -52,6 +52,7 @@ const menuGroups = [
       { title: "Kamar", url: "/admin/rooms", icon: BedDouble },
       { title: "Jenis Layanan", url: "/admin/services", icon: Layers },
       { title: "Rawat Inap", url: "/admin/rawat_inap", icon: BedDouble },
+      { title: "Rawat jalan", url: "/admin/rawat_jalan", icon: Users },
     ],
   },
   {
