@@ -51,6 +51,7 @@ const menuGroups = [
       { title: "Poli", url: "/admin/clinics", icon: Building2 },
       { title: "Kamar", url: "/admin/rooms", icon: BedDouble },
       { title: "Jenis Layanan", url: "/admin/services", icon: Layers },
+      { title: "Rawat Inap", url: "/admin/rawat_inap", icon: BedDouble },
     ],
   },
   {
