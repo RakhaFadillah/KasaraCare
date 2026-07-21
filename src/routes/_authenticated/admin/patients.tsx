@@ -4,7 +4,6 @@ import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
 import { Badge } from "@/components/ui/badge";
 
-// 1. Menambahkan "validateSearch" agar halaman ini siap menerima parameter URL '?filter=...'
 export const Route = createFileRoute("/_authenticated/admin/patients")({
   head: () => ({ meta: [{ title: "Pasien — Admin" }] }),
   validateSearch: (search: Record<string, unknown>) => {
@@ -16,7 +15,6 @@ export const Route = createFileRoute("/_authenticated/admin/patients")({
 });
 
 function PatientsAdmin() {
-  // 2. Menangkap isi filter (misal: "BPJS" atau "Non BPJS") dari URL Dashboard
   const { filter } = Route.useSearch();
 
   return (
@@ -24,16 +22,14 @@ function PatientsAdmin() {
       <CrudTable<any>
         table="patients"
         title={filter ? `Data Pasien: ${filter}` : "Semua Pasien"}
-        
-        // 3. Mengirimkan filter bawaan ke tabel pencarian Anda
-        // CATATAN: Pastikan komponen CrudTable Anda mendukung props ini (seperti defaultSearch, initialSearch, atau globalFilter)
         defaultSearch={filter || ""} 
-        
         searchKeys={["nama", "nomor_hp", "golongan", "kamar"]}
         columns={[
           { key: "nama", label: "Nama Pasien" },
           { key: "umur", label: "Umur" },
           { key: "jenis_kelamin", label: "L/P" },
+          { key: "berat_badan", label: "BB (kg)" }, // Menampilkan Berat Badan di tabel
+          { key: "tinggi_badan", label: "TB (cm)" }, // Menampilkan Tinggi Badan di tabel
           { key: "poli", label: "Poli" },
           { key: "jenis_layanan", label: "Layanan" },
           {
@@ -65,6 +61,8 @@ function PatientsAdmin() {
               { value: "Perempuan", label: "Perempuan" },
             ],
           },
+          { key: "berat_badan", label: "Berat Badan (kg)", type: "number" }, // Field form BB
+          { key: "tinggi_badan", label: "Tinggi Badan (cm)", type: "number" }, // Field form TB
           { key: "nomor_hp", label: "Nomor HP (Wajib format @c.us)", required: true },
           {
             key: "poli",
