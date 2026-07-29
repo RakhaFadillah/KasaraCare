@@ -1,99 +1,92 @@
 // @ts-nocheck
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { AdminDashboardShell } from "@/components/admin-dashboard-shell";
 import { CrudTable } from "@/components/crud-table";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/admin/doctors")({
-  head: () => ({ meta: [{ title: "Dokter — Admin" }] }),
+  head: () => ({ meta: [{ title: "Dokter & Terapis — Admin" }] }),
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      filter: search.filter as string | undefined,
+    };
+  },
   component: DoctorsAdmin,
 });
 
-// Fungsi untuk menghasilkan Nomor Izin Praktik acak secara otomatis
-const generateLicense = () => {
-  const randomNum = Math.floor(100000 + Math.random() * 900000);
-  return `SIP-${randomNum}`;
-};
-
 function DoctorsAdmin() {
-  const clinicsQ = useQuery({ 
-    queryKey: ["clinics-opts"], 
-    queryFn: async () => {
-      const { data, error } = await supabase.from("clinics").select("id, name").order("name");
-      if (error) throw new Error("Gagal memuat data poli");
-      return data ?? [];
-    } 
-  });
-  
-  const options = clinicsQ.data?.map((c: any) => ({ value: c.id, label: c.name })) ?? [];
-  
-  return (
-    <AdminDashboardShell title="Dokter" description="Manajemen data staf medis dan dokter.">
-      <CrudTable<any>
-        table="doctors" 
-        title="Dokter" 
-        
-        // 1. Gunakan !inner agar fitur pencarian bisa menembus tabel relasi
-        select="*, clinics!inner(name)" 
-        
-        // 2. Tambahkan "clinics.name" agar admin bisa mencari berdasarkan nama poli
-        searchKeys={["full_name", "specialization", "clinics.name"]}
-        
-        columns={[
-          // TAMBAHAN KODE: Menambahkan Checkbox di kolom paling awal
-          {
-            key: "select",
-            label: "☑", // Anda bisa menggantinya dengan teks "Pilih" jika lebih suka
-            render: (r) => (
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border-gray-300 text-[#00a3e0] focus:ring-[#00a3e0] cursor-pointer"
-                onChange={(e) => {
-                  // Catatan: Ini baru menampilkan visual checkbox. 
-                  // Jika Anda ingin ini bisa hapus banyak (bulk delete), 
-                  // logikanya harus dibangun di dalam file komponen CrudTable.
-                  console.log("Dokter dipilih:", r.full_name, e.target.checked);
-                }}
-              />
-            )
-          },
-          // -----------------------------------------------------------
-          { key: "full_name", label: "Nama Lengkap" },
-          { key: "specialization", label: "Spesialisasi" },
-          { key: "clinic", label: "Poli", render: (r) => r.clinics?.name ?? "—" },
-          { key: "license_no", label: "No. Izin Praktik" },
-          { 
-            key: "status", 
-            label: "Status", 
-            render: (r) => {
-              const statusLabel = r.status === "Available" ? "Active" : 
-                                  r.status === "OnLeave" ? "Cuti" : 
-                                  r.status === "Inactive" ? "Non Active" : r.status;
-                                  
-              const badgeVariant = r.status === "Available" ? "default" : 
-                                   r.status === "OnLeave" ? "outline" : "secondary";
+  const { filter } = Route.useSearch();
 
-              return <Badge variant={badgeVariant as any}>{statusLabel}</Badge>;
-            } 
+  return (
+    <AdminDashboardShell
+      title="Manajemen Dokter & Terapis"
+      description="Kelola data tenaga medis, dokter estetika, dan terapis kecantikan di klinik."
+    >
+      <CrudTable<any>
+        table="doctors"
+        title={filter ? `Pencarian: ${filter}` : "Semua Dokter & Terapis"}
+        defaultSearch={filter || ""}
+        searchKeys={["nama_lengkap", "spesialisasi", "nomor_hp"]}
+
+        // ==========================================
+        // 1. TAMPILAN KOLOM DI TABEL LUAR
+        // ==========================================
+        columns={[
+          { key: "nama_lengkap", label: "Nama Lengkap" },
+          { key: "spesialisasi", label: "Posisi / Spesialisasi" },
+          { key: "nomor_hp", label: "Nomor HP" },
+          {
+            key: "status",
+            label: "Status",
+            render: (r) => (
+              <Badge
+                variant={
+                  r.status === "Aktif"
+                    ? "default"
+                    : r.status === "Cuti"
+                      ? "secondary"
+                      : "destructive"
+                }
+              >
+                {r.status || "Aktif"}
+              </Badge>
+            ),
           },
         ]}
+
+        // ==========================================
+        // 2. ISIAN FORM SAAT TOMBOL "NEW" DIKLIK
+        // ==========================================
         fields={[
-          { key: "full_name", label: "Nama Lengkap", required: true },
-          { key: "specialization", label: "Spesialisasi", required: true },
-          { key: "clinic_id", label: "Poli", type: "select", options },
-          { key: "license_no", label: "Nomor Izin Praktik", defaultValue: generateLicense() } as any,
-          { key: "bio", label: "Bio / Profil", type: "textarea" },
-          { 
-            key: "status", 
-            label: "Status", 
-            type: "select", 
+          { key: "nama_lengkap", label: "Nama Lengkap (beserta gelar)", required: true },
+          {
+            key: "spesialisasi",
+            label: "Posisi / Spesialisasi",
+            type: "select",
+            required: true,
             options: [
-              { value: "Available", label: "Active" }, 
-              { value: "OnLeave", label: "Cuti" }, 
-              { value: "Inactive", label: "Non Active" }
-            ] 
+              {
+                value: "Dokter Spesialis Kulit (Sp.KK / Sp.DVE)",
+                label: "Dokter Spesialis Kulit (Sp.KK / Sp.DVE)",
+              },
+              { value: "Dokter Estetika", label: "Dokter Estetika" },
+              { value: "Perawat Estetika", label: "Perawat Estetika" },
+              {
+                value: "Terapis Kecantikan (Beautician)",
+                label: "Terapis Kecantikan (Beautician)",
+              },
+            ],
+          },
+          { key: "nomor_hp", label: "Nomor HP / WhatsApp", required: true },
+          {
+            key: "status",
+            label: "Status Pegawai",
+            type: "select",
+            options: [
+              { value: "Aktif", label: "Aktif" },
+              { value: "Cuti", label: "Cuti" },
+              { value: "Nonaktif / Resign", label: "Nonaktif / Resign" },
+            ],
           },
         ]}
       />

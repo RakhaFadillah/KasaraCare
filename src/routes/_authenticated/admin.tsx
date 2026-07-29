@@ -27,12 +27,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
     }
 
     // Pastikan user memiliki role admin
-    const isAdmin =
-      roles?.some((role) => role.role === "admin") ?? false;
+    const isAdmin = roles?.some((role) => role.role === "admin") ?? false;
 
     if (!isAdmin) {
       throw redirect({
-        to: "/dashboard",
+        to: "/admin",
       });
     }
   },

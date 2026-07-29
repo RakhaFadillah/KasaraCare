@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import AdminSidebar from "./admin-sidebar";
 import { Sun, Moon } from "lucide-react";
 
@@ -17,7 +17,6 @@ export function AdminDashboardShell({
   description,
   actions,
 }: AdminDashboardShellProps) {
-  
   // ==========================================
   // 1. LOGIKA PENYIMPANAN DARK MODE
   // ==========================================
@@ -30,10 +29,10 @@ export function AdminDashboardShell({
 
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
@@ -64,51 +63,42 @@ export function AdminDashboardShell({
   }, []);
 
   // Format Tanggal (Contoh: Selasa, 21 Juli 2026)
-  const formattedDate = time.toLocaleDateString('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+  const formattedDate = time.toLocaleDateString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
   // Format Jam (Contoh: 14:30:45 WIB)
-  const formattedTime = time.toLocaleTimeString('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).replace(/\./g, ':') + ' WIB';
+  const formattedTime =
+    time
+      .toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+      .replace(/\./g, ":") + " WIB";
 
   return (
-    <SidebarProvider 
-      open={isSidebarOpen} 
-      onOpenChange={handleSidebarToggle}
-    >
+    <SidebarProvider open={isSidebarOpen} onOpenChange={handleSidebarToggle}>
       <div className="flex min-h-screen w-full bg-slate-50 dark:bg-[#0f111a] transition-colors duration-300">
-        
         <AdminSidebar />
 
         <div className="flex flex-1 flex-col min-w-0">
-          
-          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" />
-            </div>
-
+          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
             <div className="flex items-center gap-5">
-              <button 
-                onClick={() => setIsDarkMode(!isDarkMode)} 
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
                 className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 cursor-pointer"
                 title={isDarkMode ? "Beralih ke Light Mode" : "Beralih ke Dark Mode"}
               >
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
 
-              {/* ========================================== */}
-              {/* HANYA BAGIAN INI YANG DIGANTI SESUAI PERMINTAAN */}
-              {/* ========================================== */}
               <div className="text-right">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 transition-colors">
                   {formattedDate}
