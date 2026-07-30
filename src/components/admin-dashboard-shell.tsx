@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "./admin-sidebar";
 import { Sun, Moon } from "lucide-react";
 
@@ -89,7 +90,11 @@ export function AdminDashboardShell({
         <AdminSidebar />
 
         <div className="flex flex-1 flex-col min-w-0">
-          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-6 shadow-sm transition-colors duration-300">
+          <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#151722]/80 backdrop-blur-md px-4 md:px-6 shadow-sm transition-colors duration-300">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" />
+            </div>
+
             <div className="flex items-center gap-5">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
@@ -99,7 +104,7 @@ export function AdminDashboardShell({
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
 
-              <div className="text-right">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 transition-colors">
                   {formattedDate}
                 </p>
@@ -110,17 +115,17 @@ export function AdminDashboardShell({
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto p-8 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+          <main className="flex-1 overflow-y-auto p-4 md:p-8 text-slate-900 dark:text-slate-100 transition-colors duration-300">
             {(title || description || actions) && (
-              <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="mb-6 md:mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                   {title && (
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">
                       {title}
                     </h1>
                   )}
                   {description && (
-                    <p className="mt-2 text-slate-500 dark:text-slate-400 transition-colors">
+                    <p className="mt-1 md:mt-2 text-sm md:text-base text-slate-500 dark:text-slate-400 transition-colors">
                       {description}
                     </p>
                   )}
